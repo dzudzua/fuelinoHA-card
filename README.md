@@ -1,4 +1,4 @@
-# Fuelino Card
+# FuelinoHA Card
 
 Custom Lovelace card for Home Assistant built on top of the `FuelinoHA` / `Fuelino` integration.
 
@@ -30,7 +30,7 @@ Current features:
 1. Open HACS in Home Assistant
 2. Add this repository as a custom repository
 3. Choose type `Dashboard`
-4. Install `Fuelino Card`
+4. Install `FuelinoHA Card`
 5. Add the card resource if HACS does not do it automatically
 
 ### Manual

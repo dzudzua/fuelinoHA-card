@@ -14,7 +14,7 @@ class FuelinoCard extends HTMLElement {
 
   setConfig(config) {
     if (!config.vehicle) {
-      throw new Error("Fuelino Card requires a vehicle slug, for example 'hyundai_i30'.");
+      throw new Error("FuelinoHA Card requires a vehicle slug, for example 'hyundai_i30'.");
     }
 
     this._config = {
@@ -408,6 +408,6 @@ customElements.define("fuelino-card", FuelinoCard);
 window.customCards = window.customCards || [];
 window.customCards.push({
   type: "fuelino-card",
-  name: "Fuelino Card",
+  name: "FuelinoHA Card",
   description: "Vehicle dashboard card for FuelinoHA / Fuelino entities.",
 });
