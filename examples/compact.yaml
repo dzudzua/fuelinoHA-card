@@ -1,0 +1,5 @@
+type: custom:fuelino-card
+vehicle: hyundai_i30
+title: Hyundai i30
+layout: compact
+accent_color: "#19b7ff"

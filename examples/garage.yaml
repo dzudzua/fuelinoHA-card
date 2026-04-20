@@ -1,0 +1,7 @@
+type: custom:fuelino-card
+vehicle: hyundai_i30
+title: Hyundai i30
+layout: garage
+accent_color: "#7c5cff"
+show_expenses: true
+show_trips: true
