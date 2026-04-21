@@ -1,4 +1,9 @@
 class FuelinoCard extends HTMLElement {
+  constructor() {
+    super();
+    this._resizeObserver = null;
+  }
+
   static async getConfigElement() {
     await import("./fuelino-card-editor.js");
     return document.createElement("fuelino-card-editor");
@@ -46,8 +51,41 @@ class FuelinoCard extends HTMLElement {
     this._render();
   }
 
+  connectedCallback() {
+    this._ensureResizeObserver();
+  }
+
+  disconnectedCallback() {
+    if (this._resizeObserver) {
+      this._resizeObserver.disconnect();
+    }
+  }
+
   getCardSize() {
     return this._config?.layout === "compact" ? 4 : 8;
+  }
+
+  _ensureResizeObserver() {
+    if (this._resizeObserver || typeof ResizeObserver === "undefined") {
+      return;
+    }
+
+    this._resizeObserver = new ResizeObserver((entries) => {
+      const width = entries[0]?.contentRect?.width ?? this.clientWidth ?? 0;
+      this._applyWidthMode(width);
+    });
+    this._resizeObserver.observe(this);
+    this._applyWidthMode(this.clientWidth ?? 0);
+  }
+
+  _applyWidthMode(width) {
+    const mode = width <= 340 ? "xs" : width <= 460 ? "sm" : width <= 720 ? "md" : "lg";
+    if (this.dataset.widthMode !== mode) {
+      this.dataset.widthMode = mode;
+      if (this._hass && this.shadowRoot) {
+        this._render();
+      }
+    }
   }
 
   _entityId(suffix) {
@@ -577,6 +615,7 @@ class FuelinoCard extends HTMLElement {
       <style>
         :host {
           display: block;
+          min-width: 0;
           --card-olive: #3a3413;
           --card-olive-deep: #262004;
           --card-olive-panel: #4a431a;
@@ -591,6 +630,7 @@ class FuelinoCard extends HTMLElement {
           overflow: hidden;
           border-radius: ${radius}px;
           box-shadow: none;
+          min-width: 0;
         }
 
         ha-icon {
@@ -605,6 +645,8 @@ class FuelinoCard extends HTMLElement {
           padding: ${this._config.dense_mode ? 14 : 18}px;
           display: grid;
           gap: ${denseGap}px;
+          min-width: 0;
+          box-sizing: border-box;
         }
 
         .topbar {
@@ -671,6 +713,8 @@ class FuelinoCard extends HTMLElement {
         .compact-shell {
           background: var(--card-olive-panel);
           border-radius: ${Math.max(radius - 4, 18)}px;
+          min-width: 0;
+          box-sizing: border-box;
         }
 
         .hero-panel {
@@ -811,6 +855,7 @@ class FuelinoCard extends HTMLElement {
           line-height: 0.95;
           font-weight: 800;
           letter-spacing: 0.01em;
+          overflow-wrap: anywhere;
         }
 
         .hero-stat-card__sub {
@@ -915,6 +960,8 @@ class FuelinoCard extends HTMLElement {
           padding: 20px;
           display: grid;
           gap: 18px;
+          min-width: 0;
+          box-sizing: border-box;
         }
 
         .garage-hero {
@@ -1009,6 +1056,8 @@ class FuelinoCard extends HTMLElement {
           padding: 18px;
           display: grid;
           gap: 14px;
+          min-width: 0;
+          box-sizing: border-box;
         }
 
         .compact-shell__main {
@@ -1035,6 +1084,76 @@ class FuelinoCard extends HTMLElement {
           padding: 8px 12px;
           background: rgba(255, 255, 255, 0.08);
           font-size: 0.84rem;
+        }
+
+        :host([data-width-mode="md"]) .garage-hero,
+        :host([data-width-mode="sm"]) .garage-hero,
+        :host([data-width-mode="xs"]) .garage-hero,
+        :host([data-width-mode="md"]) .garage-grid,
+        :host([data-width-mode="sm"]) .garage-grid,
+        :host([data-width-mode="xs"]) .garage-grid,
+        :host([data-width-mode="md"]) .garage-list-grid,
+        :host([data-width-mode="sm"]) .garage-list-grid,
+        :host([data-width-mode="xs"]) .garage-list-grid {
+          grid-template-columns: 1fr;
+        }
+
+        :host([data-width-mode="sm"]) .topbar,
+        :host([data-width-mode="xs"]) .topbar,
+        :host([data-width-mode="sm"]) .compact-shell__main,
+        :host([data-width-mode="xs"]) .compact-shell__main {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        :host([data-width-mode="sm"]) .topbar__controls,
+        :host([data-width-mode="xs"]) .topbar__controls {
+          width: 100%;
+          justify-content: space-between;
+        }
+
+        :host([data-width-mode="sm"]) .hero-stats,
+        :host([data-width-mode="sm"]) .summary-card__stats,
+        :host([data-width-mode="sm"]) .cost-card__stats,
+        :host([data-width-mode="sm"]) .garage-hero__stats,
+        :host([data-width-mode="sm"]) .garage-metrics {
+          grid-template-columns: 1fr 1fr;
+        }
+
+        :host([data-width-mode="xs"]) .hero-stats,
+        :host([data-width-mode="xs"]) .summary-card__stats,
+        :host([data-width-mode="xs"]) .cost-card__stats,
+        :host([data-width-mode="xs"]) .garage-hero__stats,
+        :host([data-width-mode="xs"]) .garage-metrics {
+          grid-template-columns: 1fr;
+        }
+
+        :host([data-width-mode="sm"]) .hero-panel,
+        :host([data-width-mode="xs"]) .hero-panel,
+        :host([data-width-mode="sm"]) .summary-card,
+        :host([data-width-mode="xs"]) .summary-card,
+        :host([data-width-mode="sm"]) .cost-card,
+        :host([data-width-mode="xs"]) .cost-card {
+          padding: 18px;
+        }
+
+        :host([data-width-mode="sm"]) .topbar h2,
+        :host([data-width-mode="sm"]) .section-head h3,
+        :host([data-width-mode="xs"]) .topbar h2,
+        :host([data-width-mode="xs"]) .section-head h3 {
+          font-size: 1.55rem;
+        }
+
+        :host([data-width-mode="xs"]) .shell,
+        :host([data-width-mode="xs"]) .garage-shell,
+        :host([data-width-mode="xs"]) .compact-shell {
+          padding: 14px;
+        }
+
+        :host([data-width-mode="xs"]) .hero-stat-card__main,
+        :host([data-width-mode="xs"]) .summary-card__main,
+        :host([data-width-mode="xs"]) .cost-card__total {
+          font-size: clamp(1.55rem, 9vw, 2.4rem);
         }
 
         @media (min-width: 920px) {
