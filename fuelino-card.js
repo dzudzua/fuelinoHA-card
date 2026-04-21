@@ -1371,17 +1371,21 @@ class FuelinoCard extends HTMLElement {
           ${
             this._config.show_header
               ? `
-          <header class="topbar">
-            <div class="topbar__left">
-              <div class="topbar__menu"><ha-icon icon="mdi:menu"></ha-icon></div>
-              <div>
-                <div class="topbar__eyebrow">FuelinoHA</div>
-                <h2>Statistika nákladů</h2>
+          <header class="fuelio-header fuelio-header--shared">
+            <div class="fuelio-header__brand">
+              <div class="fuelio-header__menu"><ha-icon icon="mdi:menu"></ha-icon></div>
+              <div class="fuelio-header__titlewrap">
+                <div class="fuelio-header__eyebrow">FuelinoHA</div>
+                <h2>Naklady</h2>
               </div>
             </div>
-            <div class="topbar__controls">
-              <div class="vehicle-chip">${this._vehicleLabel()} <ha-icon icon="mdi:chevron-down"></ha-icon></div>
-              <div class="topbar__action"><ha-icon icon="mdi:clipboard-text-outline"></ha-icon></div>
+            <div class="fuelio-vehicle">
+              <div class="fuelio-vehicle__avatar">${this._vehicleLabel().slice(0, 1).toUpperCase()}</div>
+              <div class="fuelio-vehicle__copy">
+                <strong>${this._vehicleLabel()}</strong>
+                <span>${this._formatState("odometer")}</span>
+              </div>
+              <ha-icon icon="mdi:chevron-down"></ha-icon>
             </div>
           </header>
           `
@@ -1389,6 +1393,10 @@ class FuelinoCard extends HTMLElement {
           }
 
           ${this._topPanel()}
+
+          <section class="section-chipline">
+            <div class="fuelio-chip"><ha-icon icon="mdi:chart-box-outline"></ha-icon><span>Souhrn</span></div>
+          </section>
 
           <section class="summary-grid">
             ${this._summaryBlock("Náklady (s palivem)", totalVehicle, [
@@ -1413,11 +1421,8 @@ class FuelinoCard extends HTMLElement {
             ], "fuel")}
           </section>
 
-          <section class="section-head">
-            <div>
-              <div class="section-head__eyebrow">Kategorie</div>
-              <h3>Statistika nákladů</h3>
-            </div>
+          <section class="section-chipline">
+            <div class="fuelio-chip"><ha-icon icon="mdi:shape-outline"></ha-icon><span>Kategorie</span></div>
           </section>
 
           <section class="cost-grid">
@@ -1546,20 +1551,33 @@ class FuelinoCard extends HTMLElement {
 
     return `
       <ha-card>
-        <div class="compact-shell" style="--accent:${this._config.accent_color}">
-          <div class="compact-shell__main">
-            <div>
-              <div class="topbar__eyebrow">FuelinoHA</div>
-              <h3>${title}</h3>
+        <div class="shell compact-layout" style="--accent:${this._config.accent_color}">
+          <header class="fuelio-header fuelio-header--shared">
+            <div class="fuelio-header__brand">
+              <div class="fuelio-header__menu"><ha-icon icon="mdi:menu"></ha-icon></div>
+              <div class="fuelio-header__titlewrap">
+                <div class="fuelio-header__eyebrow">FuelinoHA</div>
+                <h2>Prehled</h2>
+              </div>
             </div>
-            <div class="compact-shell__price">${this._formatState("last_price_per_unit")}</div>
-          </div>
-          <div class="compact-shell__chips">
-            <span>${this._formatState("last_fill_date")}</span>
-            <span>${this._formatState("fuel_cost_this_month")}</span>
-            <span>${this._formatState("odometer")}</span>
-            <span>${this._formatState("last_service_date")}</span>
-          </div>
+            <div class="fuelio-vehicle">
+              <div class="fuelio-vehicle__avatar">${title.slice(0, 1).toUpperCase()}</div>
+              <div class="fuelio-vehicle__copy">
+                <strong>${title}</strong>
+                <span>${this._formatState("odometer")}</span>
+              </div>
+              <ha-icon icon="mdi:chevron-down"></ha-icon>
+            </div>
+          </header>
+          <section class="compact-panel">
+            <div class="compact-panel__price">${this._formatState("last_price_per_unit")}</div>
+            <div class="compact-panel__chips">
+              <span>${this._formatState("last_fill_date")}</span>
+              <span>${this._formatState("fuel_cost_this_month")}</span>
+              <span>${this._formatState("odometer")}</span>
+              <span>${this._formatState("last_service_date")}</span>
+            </div>
+          </section>
         </div>
       </ha-card>
     `;
@@ -1972,11 +1990,17 @@ class FuelinoCard extends HTMLElement {
         .shell {
           background: ${background};
           color: var(--card-text);
-          padding: ${this._config.dense_mode ? 14 : 18}px;
+          padding: ${this._config.dense_mode ? 16 : 22}px;
           display: grid;
           gap: ${denseGap}px;
           min-width: 0;
           box-sizing: border-box;
+        }
+
+        .section-chipline {
+          display: flex;
+          align-items: center;
+          gap: 10px;
         }
 
         .topbar {
@@ -2015,8 +2039,7 @@ class FuelinoCard extends HTMLElement {
 
         .topbar h2,
         .section-head h3,
-        .garage-hero__copy h2,
-        .compact-shell h3 {
+        .garage-hero__copy h2 {
           margin: 4px 0 0;
           font-size: 2rem;
           line-height: 1.04;
@@ -2040,8 +2063,7 @@ class FuelinoCard extends HTMLElement {
         .hero-stat-card,
         .garage-panel,
         .garage-hero__copy,
-        .garage-hero__stats,
-        .compact-shell {
+        .garage-hero__stats {
           background: var(--card-olive-panel);
           border: 1px solid rgba(255, 255, 255, 0.08);
           backdrop-filter: blur(10px);
@@ -2383,38 +2405,34 @@ class FuelinoCard extends HTMLElement {
           font-size: 0.92rem;
         }
 
-        .compact-shell {
+        .compact-layout {
           color: #f6f7fb;
-          background:
-            radial-gradient(circle at top right, color-mix(in srgb, var(--accent) 55%, transparent), transparent 35%),
-            linear-gradient(145deg, #10172a 0%, #17223d 45%, #0f1220 100%);
-          padding: 18px;
-          display: grid;
-          gap: 14px;
-          min-width: 0;
-          box-sizing: border-box;
-        }
-
-        .compact-shell__main {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
           gap: 16px;
         }
 
-        .compact-shell__price {
-          font-size: 1.2rem;
+        .compact-panel {
+          background: var(--card-olive-panel);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          backdrop-filter: blur(10px);
+          border-radius: 28px;
+          padding: 20px;
+          display: grid;
+          gap: 14px;
+        }
+
+        .compact-panel__price {
+          font-size: 1.5rem;
           font-weight: 800;
           color: color-mix(in srgb, var(--accent) 75%, white);
         }
 
-        .compact-shell__chips {
+        .compact-panel__chips {
           display: flex;
           flex-wrap: wrap;
           gap: 8px;
         }
 
-        .compact-shell__chips span {
+        .compact-panel__chips span {
           border-radius: 999px;
           padding: 8px 12px;
           background: var(--card-olive-panel-strong);
@@ -2453,6 +2471,10 @@ class FuelinoCard extends HTMLElement {
         .fuelio-header {
           display: grid;
           gap: 16px;
+        }
+
+        .fuelio-header--shared {
+          margin-bottom: 2px;
         }
 
         .fuelio-header__brand {
@@ -2896,9 +2918,7 @@ class FuelinoCard extends HTMLElement {
         }
 
         :host([data-width-mode="sm"]) .topbar,
-        :host([data-width-mode="xs"]) .topbar,
-        :host([data-width-mode="sm"]) .compact-shell__main,
-        :host([data-width-mode="xs"]) .compact-shell__main {
+        :host([data-width-mode="xs"]) .topbar {
           flex-direction: column;
           align-items: flex-start;
         }
@@ -3077,7 +3097,7 @@ class FuelinoCard extends HTMLElement {
 
         :host([data-width-mode="xs"]) .shell,
         :host([data-width-mode="xs"]) .garage-shell,
-        :host([data-width-mode="xs"]) .compact-shell {
+        :host([data-width-mode="xs"]) .compact-layout {
           padding: 14px;
         }
 

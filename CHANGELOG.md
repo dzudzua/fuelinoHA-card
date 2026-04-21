@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.3.14
+
+Follow-up release for `FuelinoHA Card`.
+
+### Highlights
+
+- aligned the `costs` layout header with the same shared header structure used by `fuelio`
+- replaced the old compact card header with the same shared app header and vehicle block used by the main layouts
+- switched the `costs` section headings to the same chip-style section markers used in `fuelio`
+- tightened the visual system further so the remaining layouts share the same structural style instead of only a similar color palette
+
 ## v0.3.13
 
 Follow-up release for `FuelinoHA Card`.
