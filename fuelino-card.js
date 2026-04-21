@@ -18,6 +18,7 @@ function ensureFuelinoCardEditorDefined() {
         vehicle: "",
         title: "",
         layout: "garage",
+        trend_period: "180d",
         accent_color: "#88d24f",
         card_background: "",
         border_radius: 28,
@@ -154,6 +155,13 @@ function ensureFuelinoCardEditorDefined() {
             { value: "fuelio", label: "Fuelio Stats" },
             { value: "garage", label: "Garage" },
             { value: "compact", label: "Compact" },
+          ])}
+          ${this._select("Trend period", "trend_period", [
+            { value: "30d", label: "Last 30 days" },
+            { value: "90d", label: "Last 90 days" },
+            { value: "180d", label: "Last 180 days" },
+            { value: "365d", label: "Last year" },
+            { value: "all", label: "All data" },
           ])}
           <div class="hint">
             The card auto-reads entities from FuelinoHA using the vehicle slug. Example:
@@ -382,6 +390,7 @@ class FuelinoCard extends HTMLElement {
       vehicle: "hyundai_i30",
       title: "Hyundai i30",
       layout: "garage",
+      trend_period: "180d",
       show_expenses: true,
       show_trips: true,
       show_empty_categories: false,
@@ -394,6 +403,7 @@ class FuelinoCard extends HTMLElement {
       title: null,
       vehicle: "",
       layout: "garage",
+      trend_period: "180d",
       accent_color: "#88d24f",
       card_background: "",
       border_radius: 28,
@@ -405,6 +415,7 @@ class FuelinoCard extends HTMLElement {
       ...config,
       vehicle: String(config?.vehicle ?? "").trim(),
     };
+    this._fuelioTrendPeriod = String(this._config.trend_period || "180d");
 
     if (!this.shadowRoot) {
       this.attachShadow({ mode: "open" });
@@ -492,6 +503,14 @@ class FuelinoCard extends HTMLElement {
     return Number.isFinite(parsed) ? parsed : null;
   }
 
+  _numberFromValue(value) {
+    if (value === null || value === undefined || value === "" || value === "unknown" || value === "unavailable") {
+      return null;
+    }
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
   _sharedAttrs() {
     const candidates = [
       "total_vehicle_cost",
@@ -510,6 +529,124 @@ class FuelinoCard extends HTMLElement {
 
   _locale() {
     return this._hass?.locale?.language || this._hass?.language || navigator.language || "cs-CZ";
+  }
+
+  _numericAttr(name) {
+    return this._numberFromValue(this._sharedAttrs()?.[name]);
+  }
+
+  _recentFillNumeric(field, index = 0) {
+    const fills = this._recentFills();
+    return this._numberFromValue(fills[index]?.[field]);
+  }
+
+  _averageRecentFillField(field, items = null) {
+    const source = Array.isArray(items) ? items : this._recentFills();
+    const values = source
+      .map((item) => this._numberFromValue(item?.[field]))
+      .filter((value) => value !== null);
+    return this._average(values);
+  }
+
+  _formatNumericValue(value, unit = "", options = {}, fallback = "—") {
+    const numeric = this._numberFromValue(value);
+    if (numeric === null) {
+      return fallback;
+    }
+    const formatted = this._formatNumber(numeric, options);
+    return unit ? `${formatted} ${unit}` : formatted;
+  }
+
+  _consumptionUnit() {
+    return this._unit("last_consumption") || "L/100 km";
+  }
+
+  _averageConsumptionNumber() {
+    return (
+      this._number("average_consumption") ??
+      this._averageRecentFillField("consumption") ??
+      this._numericAttr("latest_consumption")
+    );
+  }
+
+  _lastConsumptionNumber() {
+    return this._number("last_consumption") ?? this._recentFillNumeric("consumption") ?? this._numericAttr("latest_consumption");
+  }
+
+  _averageConsumptionDisplay() {
+    return this._formatNumericValue(this._averageConsumptionNumber(), this._consumptionUnit(), {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 2,
+    });
+  }
+
+  _lastConsumptionDisplay() {
+    return this._formatNumericValue(this._lastConsumptionNumber(), this._consumptionUnit(), {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 2,
+    });
+  }
+
+  _trendPeriod() {
+    return this._fuelioTrendPeriod || this._config.trend_period || "180d";
+  }
+
+  _trendPeriodOptions() {
+    return [
+      { value: "30d", label: "30 d" },
+      { value: "90d", label: "90 d" },
+      { value: "180d", label: "180 d" },
+      { value: "365d", label: "1 rok" },
+      { value: "all", label: "Vse" },
+    ];
+  }
+
+  _trendCutoffDate() {
+    const period = this._trendPeriod();
+    if (period === "all") {
+      return null;
+    }
+    const days = Number.parseInt(period, 10);
+    if (!Number.isFinite(days) || days <= 0) {
+      return null;
+    }
+    const cutoff = new Date();
+    cutoff.setHours(0, 0, 0, 0);
+    cutoff.setDate(cutoff.getDate() - days);
+    return cutoff;
+  }
+
+  _filterRecentFillsByTrendPeriod(fills) {
+    const cutoff = this._trendCutoffDate();
+    if (!cutoff) {
+      return fills;
+    }
+    return fills.filter((item) => {
+      const date = new Date(item?.date);
+      return !Number.isNaN(date.getTime()) && date >= cutoff;
+    });
+  }
+
+  _filterMonthlySummaryByTrendPeriod(items) {
+    const cutoff = this._trendCutoffDate();
+    if (!cutoff) {
+      return items;
+    }
+    return items.filter((item) => {
+      const date = new Date(item?.year, (item?.month ?? 1) - 1, 1);
+      return !Number.isNaN(date.getTime()) && date >= cutoff;
+    });
+  }
+
+  _setFuelioTrendPeriod(period) {
+    if (!period || this._trendPeriod() === period) {
+      return;
+    }
+    this._fuelioTrendPeriod = period;
+    this._fuelioTrendSlide = 0;
+    if (this._hass && this.shadowRoot) {
+      this._render();
+    }
   }
 
   _formatNumber(value, options = {}) {
@@ -710,7 +847,7 @@ class FuelinoCard extends HTMLElement {
 
   _buildFuelioTrendCards() {
     const cards = [];
-    const fillsChronological = this._recentFills().slice().reverse();
+    const fillsChronological = this._filterRecentFillsByTrendPeriod(this._recentFills()).slice().reverse();
 
     const priceFills = fillsChronological.filter((item) => Number.isFinite(Number(item.price_per_unit)));
     if (priceFills.length >= 2) {
@@ -746,7 +883,41 @@ class FuelinoCard extends HTMLElement {
       });
     }
 
-    const monthly = this._monthlySummary().slice().reverse();
+    const volumeFills = fillsChronological.filter((item) => Number.isFinite(Number(item.volume)));
+    if (volumeFills.length >= 2) {
+      const values = volumeFills.map((item) => Number(item.volume));
+      cards.push({
+        kind: "bar",
+        icon: "mdi:gas-station-in-use",
+        title: "Objem tankovani",
+        latest: values[values.length - 1],
+        average: this._average(values),
+        delta: this._formatTrendDeltaValue(values[values.length - 1], values[values.length - 2]),
+        values,
+        unit: this._unit("average_fill_volume") || "L",
+        xStart: this._formatDate(volumeFills[0]?.date, { day: "2-digit", month: "short" }),
+        xEnd: this._formatDate(volumeFills[volumeFills.length - 1]?.date, { day: "2-digit", month: "short" }),
+      });
+    }
+
+    const fillCostFills = fillsChronological.filter((item) => Number.isFinite(Number(item.cost)));
+    if (fillCostFills.length >= 2) {
+      const values = fillCostFills.map((item) => Number(item.cost));
+      cards.push({
+        kind: "bar",
+        icon: "mdi:cash-fast",
+        title: "Cena tankovani",
+        latest: values[values.length - 1],
+        average: this._average(values),
+        delta: this._formatTrendDeltaValue(values[values.length - 1], values[values.length - 2]),
+        values,
+        unit: this._unit("fuel_cost_this_month") || "CZK",
+        xStart: this._formatDate(fillCostFills[0]?.date, { day: "2-digit", month: "short" }),
+        xEnd: this._formatDate(fillCostFills[fillCostFills.length - 1]?.date, { day: "2-digit", month: "short" }),
+      });
+    }
+
+    const monthly = this._filterMonthlySummaryByTrendPeriod(this._monthlySummary()).slice().reverse();
     if (monthly.length >= 2) {
       const fuelCosts = monthly.filter((item) => Number.isFinite(Number(item.total_cost)));
       if (fuelCosts.length >= 2) {
@@ -832,6 +1003,19 @@ class FuelinoCard extends HTMLElement {
     const total = cards.length;
     const activeIndex = Math.min(this._fuelioTrendSlide, total - 1);
     const card = cards[activeIndex];
+    const periodSelector = `
+      <div class="fuelio-trend__periods">
+        ${this._trendPeriodOptions()
+          .map(
+            (option) => `
+              <button type="button" class="fuelio-trend__period ${option.value === this._trendPeriod() ? "is-active" : ""}" data-trend-period="${option.value}">
+                ${option.label}
+              </button>
+            `
+          )
+          .join("")}
+      </div>
+    `;
     const pager = `
       <div class="fuelio-trend__dots">
         ${Array.from({ length: total }, (_, index) => `
@@ -848,6 +1032,7 @@ class FuelinoCard extends HTMLElement {
             <div class="fuelio-trend">
               <div class="fuelio-trend__meta">
                 <div class="fuelio-trend__eyebrow"><ha-icon icon="${card.icon}"></ha-icon> ${card.title}</div>
+                ${periodSelector}
                 <div class="fuelio-trend__metric">
                   <span class="fuelio-trend__value">${this._formatCurrencyValue(card.latest, card.unit, this._formatNumber(card.latest))}</span>
                   <span class="fuelio-trend__label">Posledni</span>
@@ -862,7 +1047,7 @@ class FuelinoCard extends HTMLElement {
                 </div>
               </div>
               <div class="fuelio-trend__chart">
-                <div class="fuelio-bars">
+                <div class="fuelio-bars" style="grid-template-columns: repeat(${Math.max(heights.length, 1)}, minmax(0, 1fr));">
                   ${heights
                     .map(
                       (height, index) => `
@@ -896,6 +1081,7 @@ class FuelinoCard extends HTMLElement {
           <div class="fuelio-trend">
             <div class="fuelio-trend__meta">
               <div class="fuelio-trend__eyebrow"><ha-icon icon="${card.icon}"></ha-icon> ${card.title}</div>
+              ${periodSelector}
               <div class="fuelio-trend__metric">
                 <span class="fuelio-trend__value">${this._formatCurrencyValue(card.latest, card.unit, this._formatNumber(card.latest))}</span>
                 <span class="fuelio-trend__label">Posledni</span>
@@ -1355,6 +1541,24 @@ class FuelinoCard extends HTMLElement {
     const tripDistance = this._formatState("total_trip_distance");
     const tripCostPerKm = this._formatState("average_trip_cost_per_km");
     const lastTripCost = this._formatState("last_trip_cost");
+    const averagePrice5Fills = this._formatState("average_price_5_fills");
+    const averageFillVolume = this._formatState("average_fill_volume");
+    const averageDistanceBetweenFills = this._formatState("average_distance_between_fills");
+    const averageDaysBetweenFills = this._formatState("average_days_between_fills");
+    const distanceSincePreviousFill = this._formatState("distance_since_previous_fill");
+    const daysSinceFill = this._formatState("days_since_fill");
+    const favoriteStation = this._formatState("favorite_station");
+    const favoriteCity = this._formatState("favorite_city");
+    const differentStations = this._formatState("different_stations_count");
+    const fillCount30d = this._formatState("fill_count_30d");
+    const lastFillVolume = this._formatNumericValue(recentFill?.volume, this._unit("average_fill_volume") || "L", {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 2,
+    });
+    const lastFillCost = this._formatCurrencyValue(recentFill?.cost, this._unit("fuel_cost_this_month") || "CZK");
+    const lastFillStation = recentFill?.city || favoriteStation || "Neznama pumpa";
+    const lastFillType = recentFill?.fuel_type || "Palivo";
+    const lastFillPartial = recentFill?.is_partial === true ? "Castecne tankovani" : "Plna nadrz";
 
     return `
       <ha-card>
@@ -1380,21 +1584,72 @@ class FuelinoCard extends HTMLElement {
           <section class="fuelio-section">
             <div class="fuelio-chip"><ha-icon icon="mdi:gas-station"></ha-icon><span>Palivo</span></div>
             <div class="fuelio-panel fuelio-panel--stats">
-              <div class="fuelio-panel__eyebrow">${recentFill?.fuel_type || "Palivo"}</div>
-              <div class="fuelio-statrows">
+              <div class="fuelio-panel__eyebrow">${lastFillType}</div>
+              <div class="fuelio-fuelgrid">
+                <div class="fuelio-fuelcard fuelio-fuelcard--highlight">
+                  <div class="fuelio-fuelcard__label">Posledni tankovani</div>
+                  <strong>${lastFillCost}</strong>
+                  <span>${lastFillVolume} · ${lastFillStation}</span>
+                  <small>${lastFillPartial}</small>
+                </div>
+                <div class="fuelio-fuelcard">
+                  <div class="fuelio-fuelcard__label">Prumer spotreby</div>
+                  <strong>${this._averageConsumptionDisplay()}</strong>
+                  <span>z historie tankovani</span>
+                </div>
+                <div class="fuelio-fuelcard">
+                  <div class="fuelio-fuelcard__label">Posledni spotreba</div>
+                  <strong>${this._lastConsumptionDisplay()}</strong>
+                  <span>pri poslednim zaznamu</span>
+                </div>
+                <div class="fuelio-fuelcard">
+                  <div class="fuelio-fuelcard__label">Prumerna cena 5 tankovani</div>
+                  <strong>${averagePrice5Fills}</strong>
+                  <span>rychly cenovy prehled</span>
+                </div>
+              </div>
+              <div class="fuelio-statrows fuelio-statrows--dense">
                 <div class="fuelio-statrow">
                   <div class="fuelio-statrow__left">
                     <ha-icon icon="mdi:water-outline"></ha-icon>
-                    <strong>${this._formatState("average_consumption")}</strong>
+                    <strong>${averageFillVolume}</strong>
                   </div>
-                  <div class="fuelio-statrow__label">Prumerna spotreba paliva</div>
+                  <div class="fuelio-statrow__label">Prumerny objem tankovani</div>
                 </div>
                 <div class="fuelio-statrow">
                   <div class="fuelio-statrow__left">
-                    <ha-icon icon="mdi:chart-line"></ha-icon>
-                    <strong>${this._formatState("last_consumption")}</strong>
+                    <ha-icon icon="mdi:map-marker-distance"></ha-icon>
+                    <strong>${averageDistanceBetweenFills}</strong>
                   </div>
-                  <div class="fuelio-statrow__label">Posledni spotreba paliva</div>
+                  <div class="fuelio-statrow__label">Prumerna vzdalenost mezi tankovanim</div>
+                </div>
+                <div class="fuelio-statrow">
+                  <div class="fuelio-statrow__left">
+                    <ha-icon icon="mdi:calendar-sync"></ha-icon>
+                    <strong>${averageDaysBetweenFills}</strong>
+                  </div>
+                  <div class="fuelio-statrow__label">Prumer dnu mezi tankovanim</div>
+                </div>
+                <div class="fuelio-statrow">
+                  <div class="fuelio-statrow__left">
+                    <ha-icon icon="mdi:road-variant"></ha-icon>
+                    <strong>${distanceSincePreviousFill}</strong>
+                  </div>
+                  <div class="fuelio-statrow__label">Vzdalenost od minuleho tankovani</div>
+                </div>
+                <div class="fuelio-statrow">
+                  <div class="fuelio-statrow__left">
+                    <ha-icon icon="mdi:calendar-clock"></ha-icon>
+                    <strong>${daysSinceFill}</strong>
+                  </div>
+                  <div class="fuelio-statrow__label">Dnu od posledniho tankovani</div>
+                </div>
+                <div class="fuelio-statrow">
+                  <div class="fuelio-statrow__left">
+                    <ha-icon icon="mdi:pump"></ha-icon>
+                    <strong>${fillCount30d}</strong>
+                  </div>
+                  <div class="fuelio-statrow__label">Tankovani za poslednich 30 dni</div>
                 </div>
                 <div class="fuelio-statrow">
                   <div class="fuelio-statrow__left">
@@ -1402,6 +1657,20 @@ class FuelinoCard extends HTMLElement {
                     <strong>${this._formatState("last_price_per_unit")}</strong>
                   </div>
                   <div class="fuelio-statrow__label">Posledni cena paliva</div>
+                </div>
+                <div class="fuelio-statrow">
+                  <div class="fuelio-statrow__left">
+                    <ha-icon icon="mdi:star-circle"></ha-icon>
+                    <strong>${favoriteStation}</strong>
+                  </div>
+                  <div class="fuelio-statrow__label">Nejcastejsi pumpa · ${differentStations}</div>
+                </div>
+                <div class="fuelio-statrow">
+                  <div class="fuelio-statrow__left">
+                    <ha-icon icon="mdi:city"></ha-icon>
+                    <strong>${favoriteCity}</strong>
+                  </div>
+                  <div class="fuelio-statrow__label">Nejcastejsi mesto tankovani</div>
                 </div>
               </div>
               ${
@@ -1527,6 +1796,15 @@ class FuelinoCard extends HTMLElement {
         const index = Number(button.getAttribute("data-trend-slide"));
         if (Number.isFinite(index)) {
           this._setFuelioTrendSlide(index);
+        }
+      });
+    });
+
+    this.shadowRoot.querySelectorAll("[data-trend-period]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const period = button.getAttribute("data-trend-period");
+        if (period) {
+          this._setFuelioTrendPeriod(period);
         }
       });
     });
@@ -2259,6 +2537,44 @@ class FuelinoCard extends HTMLElement {
           font-size: 0.9rem;
         }
 
+        .fuelio-fuelgrid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 14px;
+          margin-bottom: 18px;
+        }
+
+        .fuelio-fuelcard {
+          display: grid;
+          gap: 6px;
+          padding: 16px;
+          border-radius: 20px;
+          background: var(--fuelio-panel-strong);
+          min-width: 0;
+        }
+
+        .fuelio-fuelcard--highlight {
+          background:
+            linear-gradient(135deg, color-mix(in srgb, var(--accent) 26%, transparent), transparent),
+            var(--fuelio-panel-strong);
+        }
+
+        .fuelio-fuelcard__label,
+        .fuelio-fuelcard span,
+        .fuelio-fuelcard small {
+          color: var(--fuelio-muted);
+        }
+
+        .fuelio-fuelcard strong {
+          font-size: 1.2rem;
+          font-weight: 800;
+          line-height: 1.1;
+        }
+
+        .fuelio-statrows--dense .fuelio-statrow {
+          gap: 12px;
+        }
+
         .fuelio-statrows,
         .fuelio-costblock {
           display: grid;
@@ -2317,6 +2633,28 @@ class FuelinoCard extends HTMLElement {
         .fuelio-trend__meta {
           display: grid;
           gap: 16px;
+        }
+
+        .fuelio-trend__periods {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+        }
+
+        .fuelio-trend__period {
+          border: 0;
+          border-radius: 999px;
+          padding: 7px 12px;
+          background: rgba(255, 255, 255, 0.08);
+          color: var(--fuelio-muted);
+          font: inherit;
+          cursor: pointer;
+        }
+
+        .fuelio-trend__period.is-active {
+          background: color-mix(in srgb, var(--accent) 75%, white);
+          color: #0f1220;
+          font-weight: 700;
         }
 
         .fuelio-trend__metric {
@@ -2709,7 +3047,12 @@ class FuelinoCard extends HTMLElement {
         }
 
         :host([data-width-mode="sm"]) .fuelio-tripgrid,
+        :host([data-width-mode="sm"]) .fuelio-fuelgrid,
         :host([data-width-mode="xs"]) .fuelio-tripgrid {
+          grid-template-columns: 1fr;
+        }
+
+        :host([data-width-mode="xs"]) .fuelio-fuelgrid {
           grid-template-columns: 1fr;
         }
 

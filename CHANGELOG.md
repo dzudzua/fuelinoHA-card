@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.3.10
+## v0.3.11
 
 Follow-up release for `FuelinoHA Card`.
 
@@ -22,6 +22,11 @@ Follow-up release for `FuelinoHA Card`.
 - replaced that crash state with a friendly placeholder message inside the card
 - switched README badges to stable tag and repository endpoints that render correctly on GitHub and in HACS
 - updated manual installation docs to match the single-file card setup
+- expanded the `fuelio` layout with a denser fueling dashboard focused on consumption, fill volume, cadence, station habits, and latest fill summary
+- added more trend cards for fill volume and fill cost while keeping the existing graphs
+- added in-card graph period switching for `30d`, `90d`, `180d`, `365d`, and `all`
+- added config/editor support for the default trend period
+- added consumption fallbacks from shared attributes and recent fill history when dedicated sensors are missing
 
 ### Notes
 

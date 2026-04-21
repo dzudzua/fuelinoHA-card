@@ -27,6 +27,8 @@ Current features:
   - `fuelio`
   - `garage`
   - `compact`
+- interactive fuel trend carousel with swipe and click navigation
+- configurable graph period for the `fuelio` layout
 - reads Fuelino sensor entities from one vehicle slug, for example `hyundai_i30`
 - shows:
   - last fill
@@ -35,6 +37,7 @@ Current features:
   - monthly fuel cost
   - monthly non-fuel cost
   - service/trip highlights
+  - expanded fuel insights such as consumption fallback, average fill volume, fill cadence, station habits, and recent fueling summary
 
 ## Installation
 
@@ -66,6 +69,7 @@ type: custom:fuelino-card
 vehicle: hyundai_i30
 title: Hyundai i30
 layout: garage
+trend_period: 180d
 ```
 
 Supported options:
@@ -73,6 +77,7 @@ Supported options:
 - `vehicle`: vehicle slug used in entity ids, for example `hyundai_i30`
 - `title`: optional title override
 - `layout`: `garage`, `costs`, `fuelio`, or `compact`
+- `trend_period`: `30d`, `90d`, `180d`, `365d`, or `all`
 - `accent_color`: optional CSS color for the main accent
 - `show_expenses`: `true` / `false`
 - `show_trips`: `true` / `false`
