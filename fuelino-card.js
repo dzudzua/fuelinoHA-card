@@ -828,6 +828,32 @@ class FuelinoCard extends HTMLElement {
     return total / values.length;
   }
 
+  _barPalette(kind) {
+    const palettes = {
+      volume: {
+        fill: "linear-gradient(180deg, rgba(110, 203, 255, 0.95) 0%, rgba(61, 145, 255, 0.72) 100%)",
+        active: "linear-gradient(180deg, rgba(173, 230, 255, 1) 0%, rgba(77, 167, 255, 0.92) 100%)",
+      },
+      fill_cost: {
+        fill: "linear-gradient(180deg, rgba(103, 236, 199, 0.95) 0%, rgba(38, 182, 148, 0.74) 100%)",
+        active: "linear-gradient(180deg, rgba(155, 248, 223, 1) 0%, rgba(56, 207, 171, 0.96) 100%)",
+      },
+      monthly_cost: {
+        fill: "linear-gradient(180deg, rgba(124, 183, 255, 0.95) 0%, rgba(72, 113, 244, 0.76) 100%)",
+        active: "linear-gradient(180deg, rgba(185, 216, 255, 1) 0%, rgba(96, 136, 255, 0.96) 100%)",
+      },
+      monthly_distance: {
+        fill: "linear-gradient(180deg, rgba(165, 198, 255, 0.92) 0%, rgba(103, 144, 227, 0.72) 100%)",
+        active: "linear-gradient(180deg, rgba(223, 235, 255, 1) 0%, rgba(129, 169, 245, 0.95) 100%)",
+      },
+      default: {
+        fill: "linear-gradient(180deg, rgba(124, 183, 255, 0.95) 0%, rgba(72, 113, 244, 0.76) 100%)",
+        active: "linear-gradient(180deg, rgba(185, 216, 255, 1) 0%, rgba(96, 136, 255, 0.96) 100%)",
+      },
+    };
+    return palettes[kind] || palettes.default;
+  }
+
   _setFuelioTrendSlide(index, total = null) {
     const count = total ?? this._buildFuelioTrendCards().length;
     if (!count) {
@@ -887,6 +913,7 @@ class FuelinoCard extends HTMLElement {
       const values = volumeFills.map((item) => Number(item.volume));
       cards.push({
         kind: "bar",
+        bar_kind: "volume",
         icon: "mdi:gas-station-in-use",
         title: "Objem tankovani",
         latest: values[values.length - 1],
@@ -904,6 +931,7 @@ class FuelinoCard extends HTMLElement {
       const values = fillCostFills.map((item) => Number(item.cost));
       cards.push({
         kind: "bar",
+        bar_kind: "fill_cost",
         icon: "mdi:cash-fast",
         title: "Cena tankovani",
         latest: values[values.length - 1],
@@ -923,6 +951,7 @@ class FuelinoCard extends HTMLElement {
         const values = fuelCosts.map((item) => Number(item.total_cost));
         cards.push({
           kind: "bar",
+          bar_kind: "monthly_cost",
           icon: "mdi:cash",
           title: "Mesicni naklady (palivo)",
           latest: values[values.length - 1],
@@ -940,6 +969,7 @@ class FuelinoCard extends HTMLElement {
         const values = distances.map((item) => Number(item.distance));
         cards.push({
           kind: "bar",
+          bar_kind: "monthly_distance",
           icon: "mdi:map-marker-distance",
           title: "Mesicni vzdalenost",
           latest: values[values.length - 1],
@@ -1025,6 +1055,7 @@ class FuelinoCard extends HTMLElement {
 
     if (card.kind === "bar") {
       const heights = this._barHeights(card.values);
+      const palette = this._barPalette(card.bar_kind);
       return `
         <section class="fuelio-panel fuelio-panel--trend">
           <div class="fuelio-trend-carousel" data-trend-carousel>
@@ -1046,7 +1077,10 @@ class FuelinoCard extends HTMLElement {
                 </div>
               </div>
               <div class="fuelio-trend__chart">
-                <div class="fuelio-bars" style="grid-template-columns: repeat(${Math.max(heights.length, 1)}, minmax(0, 1fr));">
+                <div
+                  class="fuelio-bars"
+                  style="grid-template-columns: repeat(${Math.max(heights.length, 1)}, minmax(0, 1fr)); --bar-fill:${palette.fill}; --bar-fill-active:${palette.active};"
+                >
                   ${heights
                     .map(
                       (height, index) => `
@@ -1914,6 +1948,7 @@ class FuelinoCard extends HTMLElement {
           --card-olive-mid: #17223d;
           --card-olive-deep: #0f1220;
           --card-olive-panel: rgba(255, 255, 255, 0.06);
+          --card-olive-panel-strong: rgba(255, 255, 255, 0.09);
           --card-text: #f6f7fb;
           --card-muted: rgba(246, 247, 251, 0.68);
           --card-divider: rgba(255, 255, 255, 0.14);
@@ -1965,7 +2000,8 @@ class FuelinoCard extends HTMLElement {
           border-radius: 16px;
           display: grid;
           place-items: center;
-          background: rgba(255, 255, 255, 0.06);
+          background: var(--card-olive-panel);
+          border: 1px solid rgba(255, 255, 255, 0.08);
           color: var(--card-text);
         }
 
@@ -1984,7 +2020,7 @@ class FuelinoCard extends HTMLElement {
           margin: 4px 0 0;
           font-size: 2rem;
           line-height: 1.04;
-          font-weight: 600;
+          font-weight: 800;
         }
 
         .vehicle-chip {
@@ -1993,8 +2029,8 @@ class FuelinoCard extends HTMLElement {
           gap: 8px;
           border-radius: 999px;
           padding: 12px 18px;
-          border: 2px solid rgba(255, 255, 255, 0.45);
-          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: var(--card-olive-panel);
           font-size: 1rem;
         }
 
@@ -2024,7 +2060,9 @@ class FuelinoCard extends HTMLElement {
           position: relative;
           min-height: 200px;
           border-radius: ${Math.max(radius - 8, 16)}px;
-          background: rgba(255, 255, 255, 0.03);
+          background:
+            radial-gradient(circle at top right, color-mix(in srgb, var(--card-green) 26%, transparent), transparent 34%),
+            rgba(255, 255, 255, 0.03);
           overflow: hidden;
         }
 
@@ -2047,7 +2085,7 @@ class FuelinoCard extends HTMLElement {
           width: 138px;
           height: 92px;
           border-radius: 18px;
-          background: linear-gradient(180deg, #6a7df1, #4f5cd4);
+          background: linear-gradient(180deg, color-mix(in srgb, var(--card-green) 30%, #7ea3ff), #4f5cd4);
           box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.08);
         }
 
@@ -2236,7 +2274,7 @@ class FuelinoCard extends HTMLElement {
           width: 48px;
           height: 48px;
           border-radius: 16px;
-          background: rgba(255, 255, 255, 0.06);
+          background: var(--card-olive-panel-strong);
           display: grid;
           place-items: center;
           color: var(--card-green);
@@ -2379,7 +2417,8 @@ class FuelinoCard extends HTMLElement {
         .compact-shell__chips span {
           border-radius: 999px;
           padding: 8px 12px;
-          background: rgba(255, 255, 255, 0.08);
+          background: var(--card-olive-panel-strong);
+          border: 1px solid rgba(255, 255, 255, 0.08);
           font-size: 0.84rem;
         }
 
@@ -2388,7 +2427,7 @@ class FuelinoCard extends HTMLElement {
           --fuelio-bg-mid: var(--card-olive-mid);
           --fuelio-bg-deep: var(--card-olive-deep);
           --fuelio-panel: var(--card-olive-panel);
-          --fuelio-panel-strong: rgba(255, 255, 255, 0.09);
+          --fuelio-panel-strong: var(--card-olive-panel-strong);
           --fuelio-text: var(--card-text);
           --fuelio-muted: var(--card-muted);
           --fuelio-line: color-mix(in srgb, var(--accent) 78%, white);
@@ -2429,7 +2468,8 @@ class FuelinoCard extends HTMLElement {
           border-radius: 16px;
           display: grid;
           place-items: center;
-          background: rgba(255, 255, 255, 0.06);
+          background: var(--fuelio-panel);
+          border: 1px solid rgba(255, 255, 255, 0.08);
         }
 
         .fuelio-header__titlewrap {
@@ -2458,7 +2498,8 @@ class FuelinoCard extends HTMLElement {
           gap: 14px;
           border-radius: 22px;
           padding: 16px 18px;
-          background: rgba(255, 255, 255, 0.05);
+          background: var(--fuelio-panel);
+          border: 1px solid rgba(255, 255, 255, 0.08);
         }
 
         .fuelio-vehicle__avatar {
@@ -2467,7 +2508,7 @@ class FuelinoCard extends HTMLElement {
           border-radius: 50%;
           display: grid;
           place-items: center;
-          background: rgba(255, 255, 255, 0.08);
+          background: var(--fuelio-panel-strong);
           font-size: 1.65rem;
           font-weight: 700;
         }
@@ -2500,7 +2541,8 @@ class FuelinoCard extends HTMLElement {
           width: fit-content;
           border-radius: 999px;
           padding: 10px 16px;
-          background: rgba(255, 255, 255, 0.08);
+          background: var(--fuelio-panel-strong);
+          border: 1px solid rgba(255, 255, 255, 0.08);
           color: var(--fuelio-text);
           font-weight: 700;
         }
@@ -2645,7 +2687,7 @@ class FuelinoCard extends HTMLElement {
           border: 0;
           border-radius: 999px;
           padding: 7px 12px;
-          background: rgba(255, 255, 255, 0.08);
+          background: var(--fuelio-panel-strong);
           color: var(--fuelio-muted);
           font: inherit;
           cursor: pointer;
@@ -2731,7 +2773,7 @@ class FuelinoCard extends HTMLElement {
           border-radius: 50%;
           border: 0;
           padding: 0;
-          background: rgba(0, 0, 0, 0.28);
+          background: rgba(255, 255, 255, 0.2);
           cursor: pointer;
         }
 
@@ -2767,13 +2809,18 @@ class FuelinoCard extends HTMLElement {
         .fuelio-bars__bar {
           width: 100%;
           border-radius: 10px;
-          background: color-mix(in srgb, var(--fuelio-line) 84%, white);
-          box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+          background: var(--bar-fill, color-mix(in srgb, var(--fuelio-line) 84%, white));
+          box-shadow:
+            inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+            0 12px 24px rgba(13, 19, 36, 0.24);
         }
 
         .fuelio-bars__bar.is-active {
-          outline: 2px dashed rgba(255, 255, 255, 0.38);
-          outline-offset: 4px;
+          background: var(--bar-fill-active, var(--bar-fill, color-mix(in srgb, var(--fuelio-line) 92%, white)));
+          box-shadow:
+            inset 0 0 0 1px rgba(255, 255, 255, 0.12),
+            0 0 0 2px rgba(255, 255, 255, 0.18),
+            0 16px 32px rgba(13, 19, 36, 0.34);
         }
 
         .fuelio-tripgrid {

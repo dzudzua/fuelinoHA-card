@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.3.13
+
+Follow-up release for `FuelinoHA Card`.
+
+### Highlights
+
+- fixed the bar colors for the later trend slides so volume, fill cost, monthly fuel cost, and monthly distance now render with intentional bar palettes
+- improved the active bar highlight styling in trend charts
+- pushed the `costs`, `fuelio`, and `compact` layouts closer into one shared visual system by aligning chips, controls, panel surfaces, and accent treatment
+
 ## v0.3.12
 
 Follow-up release for `FuelinoHA Card`.
