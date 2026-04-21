@@ -24,6 +24,7 @@ Current features:
 - built-in visual editor for Home Assistant card configuration
 - three layouts:
   - `costs`
+  - `fuelio`
   - `garage`
   - `compact`
 - reads Fuelino sensor entities from one vehicle slug, for example `hyundai_i30`
@@ -71,7 +72,7 @@ Supported options:
 
 - `vehicle`: vehicle slug used in entity ids, for example `hyundai_i30`
 - `title`: optional title override
-- `layout`: `costs`, `garage`, or `compact`
+- `layout`: `costs`, `fuelio`, `garage`, or `compact`
 - `accent_color`: optional CSS color for the main accent
 - `show_expenses`: `true` / `false`
 - `show_trips`: `true` / `false`

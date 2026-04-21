@@ -151,6 +151,7 @@ function ensureFuelinoCardEditorDefined() {
           ${this._input("Card title", "title", "Hyundai i30")}
           ${this._select("Layout", "layout", [
             { value: "costs", label: "Costs" },
+            { value: "fuelio", label: "Fuelio Stats" },
             { value: "garage", label: "Garage" },
             { value: "compact", label: "Compact" },
           ])}
@@ -424,7 +425,13 @@ class FuelinoCard extends HTMLElement {
   }
 
   getCardSize() {
-    return this._config?.layout === "compact" ? 4 : 8;
+    if (this._config?.layout === "compact") {
+      return 4;
+    }
+    if (this._config?.layout === "fuelio") {
+      return 12;
+    }
+    return 8;
   }
 
   _hasVehicle() {
@@ -576,6 +583,228 @@ class FuelinoCard extends HTMLElement {
   _recentFills() {
     const attrs = this._sharedAttrs();
     return Array.isArray(attrs.recent_fills) ? attrs.recent_fills : [];
+  }
+
+  _recentTrips() {
+    const attrs = this._sharedAttrs();
+    return Array.isArray(attrs.recent_trips) ? attrs.recent_trips : [];
+  }
+
+  _monthlySummary() {
+    const attrs = this._sharedAttrs();
+    return Array.isArray(attrs.monthly_summary) ? attrs.monthly_summary : [];
+  }
+
+  _monthSummaryAt(index) {
+    return this._monthlySummary()[index] || null;
+  }
+
+  _monthLabel(summary) {
+    if (!summary?.year || !summary?.month) {
+      return "Nezname obdobi";
+    }
+
+    const date = new Date(summary.year, summary.month - 1, 1);
+    return new Intl.DateTimeFormat(this._locale(), { month: "long", year: "numeric" }).format(date);
+  }
+
+  _formatDate(value, options = {}) {
+    if (!value) {
+      return "—";
+    }
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return String(value);
+    }
+
+    return new Intl.DateTimeFormat(this._locale(), {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      ...options,
+    }).format(date);
+  }
+
+  _daysAgo(value) {
+    if (!value) {
+      return null;
+    }
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return null;
+    }
+
+    const now = new Date();
+    const utcNow = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+    const utcDate = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+    return Math.max(0, Math.round((utcNow - utcDate) / 86400000));
+  }
+
+  _daysAgoLabel(value) {
+    const days = this._daysAgo(value);
+    if (days === null) {
+      return "";
+    }
+    if (days === 0) {
+      return "dnes";
+    }
+    if (days === 1) {
+      return "pred 1 dnem";
+    }
+    return `pred ${days} dny`;
+  }
+
+  _formatTrendDelta(value) {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) {
+      return "—";
+    }
+    const sign = numeric > 0 ? "+" : "";
+    return `${sign}${this._formatNumber(numeric, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`;
+  }
+
+  _recentFuelPriceDeltaPercent() {
+    const fills = this._recentFills().filter((item) => Number.isFinite(Number(item.price_per_unit)));
+    if (fills.length < 2) {
+      return null;
+    }
+
+    const latest = Number(fills[0].price_per_unit);
+    const previous = Number(fills[1].price_per_unit);
+    if (!Number.isFinite(latest) || !Number.isFinite(previous) || previous === 0) {
+      return null;
+    }
+
+    return ((latest - previous) / previous) * 100;
+  }
+
+  _trendPoints(values, width = 420, height = 170) {
+    if (!Array.isArray(values) || values.length === 0) {
+      return "";
+    }
+
+    if (values.length === 1) {
+      const y = height / 2;
+      return `0,${y} ${width},${y}`;
+    }
+
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    const range = max - min || 1;
+
+    return values
+      .map((value, index) => {
+        const x = (index / (values.length - 1)) * width;
+        const y = height - ((value - min) / range) * height;
+        return `${x.toFixed(1)},${y.toFixed(1)}`;
+      })
+      .join(" ");
+  }
+
+  _fuelioTrendCard() {
+    const fills = this._recentFills()
+      .filter((item) => Number.isFinite(Number(item.price_per_unit)))
+      .slice()
+      .reverse();
+    if (fills.length === 0) {
+      return "";
+    }
+
+    const values = fills.map((item) => Number(item.price_per_unit));
+    const latest = values[values.length - 1];
+    const average = values.reduce((sum, value) => sum + value, 0) / values.length;
+    const delta = this._recentFuelPriceDeltaPercent();
+    const points = this._trendPoints(values);
+    const latestFill = this._recentFills()[0] || null;
+    const labels = fills;
+    const firstLabel = labels[0]?.date ? this._formatDate(labels[0].date, { day: "2-digit", month: "short" }) : "";
+    const lastLabel = labels[labels.length - 1]?.date
+      ? this._formatDate(labels[labels.length - 1].date, { day: "2-digit", month: "short" })
+      : "";
+    const max = Math.max(...values);
+    const min = Math.min(...values);
+    const avgY = 170 - (((average - min) / ((max - min) || 1)) * 170);
+
+    return `
+      <section class="fuelio-panel fuelio-panel--trend">
+        <div class="fuelio-panel__header">
+          <div class="fuelio-chip"><ha-icon icon="mdi:chart-line"></ha-icon><span>Trendy</span></div>
+        </div>
+        <div class="fuelio-trend">
+          <div class="fuelio-trend__meta">
+            <div class="fuelio-trend__eyebrow">Cena paliva</div>
+            <div class="fuelio-trend__metric">
+              <span class="fuelio-trend__value">${this._formatCurrencyValue(latest, this._unit("last_price_per_unit"))}</span>
+              <span class="fuelio-trend__label">Posledni cena</span>
+            </div>
+            <div class="fuelio-trend__metric">
+              <span class="fuelio-trend__value">${this._formatCurrencyValue(average, this._unit("average_price"))}</span>
+              <span class="fuelio-trend__label">Prumer</span>
+            </div>
+            <div class="fuelio-trend__metric">
+              <span class="fuelio-trend__value ${delta > 0 ? "is-up" : delta < 0 ? "is-down" : ""}">${this._formatTrendDelta(delta)}</span>
+              <span class="fuelio-trend__label">Zmena oproti minule</span>
+            </div>
+            ${
+              latestFill
+                ? `<div class="fuelio-trend__hint">${this._formatDate(latestFill.date)} ${this._daysAgoLabel(latestFill.date)}</div>`
+                : ""
+            }
+          </div>
+          <div class="fuelio-trend__chart">
+            <svg viewBox="0 0 420 210" role="img" aria-label="Fuel price trend">
+              <defs>
+                <linearGradient id="fuelioTrendFill" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stop-color="rgba(235,214,112,0.42)"></stop>
+                  <stop offset="100%" stop-color="rgba(235,214,112,0.02)"></stop>
+                </linearGradient>
+              </defs>
+              <line x1="0" y1="${avgY.toFixed(1)}" x2="420" y2="${avgY.toFixed(1)}" class="fuelio-trend__avg"></line>
+              <polyline points="${points} 420,170 0,170" class="fuelio-trend__area"></polyline>
+              <polyline points="${points}" class="fuelio-trend__line"></polyline>
+              ${points
+                .split(" ")
+                .map((point, index, all) => {
+                  const [x, y] = point.split(",");
+                  const active = index === all.length - 1 ? "is-active" : "";
+                  return `<circle cx="${x}" cy="${y}" r="${index === all.length - 1 ? 7 : 4.5}" class="fuelio-trend__dot ${active}"></circle>`;
+                })
+                .join("")}
+            </svg>
+            <div class="fuelio-trend__axis">
+              <span>${firstLabel}</span>
+              <span>${lastLabel}</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    `;
+  }
+
+  _recentActivityItems() {
+    const fills = this._recentFills().map((item) => ({
+      kind: "fill",
+      icon: "mdi:gas-station",
+      amount: this._formatCurrencyValue(item.cost),
+      date: item.date,
+      title: item.fuel_type || "Dotankovani",
+      note: item.volume ? `${this._formatNumber(item.volume, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} L` : "",
+    }));
+
+    const expenses = this._recentExpenses().map((item) => ({
+      kind: "expense",
+      icon: "mdi:cash",
+      amount: this._formatCurrencyValue(item.cost),
+      date: item.date,
+      title: item.title || item.category_name || "Vydaj",
+      note: item.category_name || "",
+    }));
+
+    return [...fills, ...expenses]
+      .sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")))
+      .slice(0, 6);
   }
 
   _normalize(value) {
@@ -959,6 +1188,176 @@ class FuelinoCard extends HTMLElement {
     `;
   }
 
+  _renderFuelioStats() {
+    const currentMonth = this._monthSummaryAt(0);
+    const previousMonth = this._monthSummaryAt(1);
+    const recentFill = this._recentFills()[0] || null;
+    const activities = this._recentActivityItems();
+    const tripCount = this._formatState("trip_count");
+    const tripDistance = this._formatState("total_trip_distance");
+    const tripCostPerKm = this._formatState("average_trip_cost_per_km");
+    const lastTripCost = this._formatState("last_trip_cost");
+
+    return `
+      <ha-card>
+        <div class="fuelio-shell">
+          <header class="fuelio-header">
+            <div class="fuelio-header__brand">
+              <div class="fuelio-header__menu"><ha-icon icon="mdi:menu"></ha-icon></div>
+              <div class="fuelio-header__titlewrap">
+                <div class="fuelio-header__eyebrow">FuelinoHA</div>
+                <h2>fuelio</h2>
+              </div>
+            </div>
+            <div class="fuelio-vehicle">
+              <div class="fuelio-vehicle__avatar">${this._vehicleLabel().slice(0, 1).toUpperCase()}</div>
+              <div class="fuelio-vehicle__copy">
+                <strong>${this._vehicleLabel()}</strong>
+                <span>${this._formatState("odometer")}</span>
+              </div>
+              <ha-icon icon="mdi:chevron-down"></ha-icon>
+            </div>
+          </header>
+
+          <section class="fuelio-section">
+            <div class="fuelio-chip"><ha-icon icon="mdi:gas-station"></ha-icon><span>Palivo</span></div>
+            <div class="fuelio-panel fuelio-panel--stats">
+              <div class="fuelio-panel__eyebrow">${recentFill?.fuel_type || "Palivo"}</div>
+              <div class="fuelio-statrows">
+                <div class="fuelio-statrow">
+                  <div class="fuelio-statrow__left">
+                    <ha-icon icon="mdi:water-outline"></ha-icon>
+                    <strong>${this._formatState("average_consumption")}</strong>
+                  </div>
+                  <div class="fuelio-statrow__label">Prumerna spotreba paliva</div>
+                </div>
+                <div class="fuelio-statrow">
+                  <div class="fuelio-statrow__left">
+                    <ha-icon icon="mdi:chart-line"></ha-icon>
+                    <strong>${this._formatState("last_consumption")}</strong>
+                  </div>
+                  <div class="fuelio-statrow__label">Posledni spotreba paliva</div>
+                </div>
+                <div class="fuelio-statrow">
+                  <div class="fuelio-statrow__left">
+                    <ha-icon icon="mdi:cash-fast"></ha-icon>
+                    <strong>${this._formatState("last_price_per_unit")}</strong>
+                  </div>
+                  <div class="fuelio-statrow__label">Posledni cena paliva</div>
+                </div>
+              </div>
+              ${
+                recentFill
+                  ? `<div class="fuelio-panel__footer">${this._formatDate(recentFill.date)} · ${this._daysAgoLabel(recentFill.date)}</div>`
+                  : ""
+              }
+            </div>
+          </section>
+
+          <section class="fuelio-section">
+            <div class="fuelio-chip"><ha-icon icon="mdi:currency-usd"></ha-icon><span>Naklady</span></div>
+            <div class="fuelio-panel fuelio-panel--stats">
+              <div class="fuelio-costblock">
+                <div class="fuelio-costblock__title">${currentMonth ? this._monthLabel(currentMonth) : "Tento mesic"}</div>
+                <div class="fuelio-statrow">
+                  <div class="fuelio-statrow__left">
+                    <ha-icon icon="mdi:gas-station"></ha-icon>
+                    <strong>${this._formatState("fuel_cost_this_month")}</strong>
+                  </div>
+                  <div class="fuelio-statrow__label">Palivo</div>
+                </div>
+                <div class="fuelio-statrow">
+                  <div class="fuelio-statrow__left">
+                    <ha-icon icon="mdi:cash"></ha-icon>
+                    <strong>${this._formatState("expense_cost_this_month")}</strong>
+                  </div>
+                  <div class="fuelio-statrow__label">Ostatni naklady</div>
+                </div>
+              </div>
+              <div class="fuelio-costblock fuelio-costblock--previous">
+                <div class="fuelio-costblock__title">${previousMonth ? this._monthLabel(previousMonth) : "Predchozi mesic"}</div>
+                <div class="fuelio-statrow">
+                  <div class="fuelio-statrow__left">
+                    <ha-icon icon="mdi:gas-station"></ha-icon>
+                    <strong>${this._formatState("last_month_cost")}</strong>
+                  </div>
+                  <div class="fuelio-statrow__label">Palivo</div>
+                </div>
+                <div class="fuelio-statrow">
+                  <div class="fuelio-statrow__left">
+                    <ha-icon icon="mdi:counter"></ha-icon>
+                    <strong>${this._formatState("last_month_fill_count")}</strong>
+                  </div>
+                  <div class="fuelio-statrow__label">Tankovani</div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          ${this._fuelioTrendCard()}
+
+          ${
+            this._config.show_trips
+              ? `
+          <section class="fuelio-section">
+            <div class="fuelio-chip"><ha-icon icon="mdi:map-marker-path"></ha-icon><span>Zaznam jizd</span></div>
+            <div class="fuelio-panel fuelio-panel--stats">
+              <div class="fuelio-tripgrid">
+                <div class="fuelio-tripcell">
+                  <strong>${tripCount}</strong>
+                  <span>Celkovy pocet tras</span>
+                </div>
+                <div class="fuelio-tripcell">
+                  <strong>${tripDistance}</strong>
+                  <span>Vzdalenost</span>
+                </div>
+                <div class="fuelio-tripcell">
+                  <strong>${tripCostPerKm}</strong>
+                  <span>Prumerne naklady na km</span>
+                </div>
+                <div class="fuelio-tripcell">
+                  <strong>${lastTripCost}</strong>
+                  <span>Posledni cena jizdy</span>
+                </div>
+              </div>
+            </div>
+          </section>
+          `
+              : ""
+          }
+
+          <section class="fuelio-section">
+            <div class="fuelio-chip"><ha-icon icon="mdi:history"></ha-icon><span>Posledni polozky</span></div>
+            <div class="fuelio-panel fuelio-panel--list">
+              ${
+                activities.length
+                  ? activities
+                      .map(
+                        (item) => `
+                    <div class="fuelio-activity">
+                      <div class="fuelio-activity__amount">
+                        <ha-icon icon="${item.icon}"></ha-icon>
+                        <strong>${item.amount}</strong>
+                      </div>
+                      <div class="fuelio-activity__date">${this._formatDate(item.date, {
+                        weekday: "short",
+                        day: "2-digit",
+                        month: "2-digit",
+                      })}</div>
+                      <div class="fuelio-activity__title">${item.title}</div>
+                    </div>
+                  `
+                      )
+                      .join("")
+                  : `<div class="empty-note">Posledni polozky zatim nejsou k dispozici.</div>`
+              }
+            </div>
+          </section>
+        </div>
+      </ha-card>
+    `;
+  }
+
   _render() {
     if (!this._hass || !this._config) {
       return;
@@ -1015,7 +1414,9 @@ class FuelinoCard extends HTMLElement {
     }
 
     let cardHtml = this._renderCosts();
-    if (this._config.layout === "garage") {
+    if (this._config.layout === "fuelio") {
+      cardHtml = this._renderFuelioStats();
+    } else if (this._config.layout === "garage") {
       cardHtml = this._renderGarage();
     } else if (this._config.layout === "compact") {
       cardHtml = this._renderCompact();
@@ -1502,6 +1903,330 @@ class FuelinoCard extends HTMLElement {
           font-size: 0.84rem;
         }
 
+        .fuelio-shell {
+          --fuelio-bg: #3a3413;
+          --fuelio-bg-deep: #241f07;
+          --fuelio-panel: rgba(255, 248, 214, 0.12);
+          --fuelio-panel-strong: rgba(255, 248, 214, 0.16);
+          --fuelio-text: #f7f1cc;
+          --fuelio-muted: rgba(247, 241, 204, 0.68);
+          --fuelio-line: #ead46b;
+          --fuelio-down: #df6f61;
+          background: linear-gradient(180deg, var(--fuelio-bg) 0%, var(--fuelio-bg-deep) 100%);
+          color: var(--fuelio-text);
+          padding: 22px;
+          display: grid;
+          gap: 18px;
+          min-width: 0;
+          box-sizing: border-box;
+        }
+
+        .fuelio-header {
+          display: grid;
+          gap: 16px;
+        }
+
+        .fuelio-header__brand {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 16px;
+        }
+
+        .fuelio-header__menu {
+          width: 46px;
+          height: 46px;
+          border-radius: 16px;
+          display: grid;
+          place-items: center;
+          background: rgba(255, 248, 214, 0.08);
+        }
+
+        .fuelio-header__titlewrap {
+          flex: 1;
+          min-width: 0;
+        }
+
+        .fuelio-header__eyebrow {
+          font-size: 0.78rem;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+          color: var(--fuelio-muted);
+        }
+
+        .fuelio-header h2 {
+          margin: 4px 0 0;
+          font-size: 2.25rem;
+          line-height: 1;
+          font-weight: 800;
+        }
+
+        .fuelio-vehicle {
+          display: grid;
+          grid-template-columns: auto 1fr auto;
+          align-items: center;
+          gap: 14px;
+          border-radius: 22px;
+          padding: 16px 18px;
+          background: rgba(20, 14, 2, 0.5);
+        }
+
+        .fuelio-vehicle__avatar {
+          width: 54px;
+          height: 54px;
+          border-radius: 50%;
+          display: grid;
+          place-items: center;
+          background: rgba(255, 248, 214, 0.12);
+          font-size: 1.65rem;
+          font-weight: 700;
+        }
+
+        .fuelio-vehicle__copy {
+          display: grid;
+          gap: 2px;
+          min-width: 0;
+        }
+
+        .fuelio-vehicle__copy strong {
+          font-size: 1.45rem;
+          font-weight: 700;
+        }
+
+        .fuelio-vehicle__copy span {
+          color: var(--fuelio-muted);
+          font-size: 1rem;
+        }
+
+        .fuelio-section {
+          display: grid;
+          gap: 12px;
+        }
+
+        .fuelio-chip {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          width: fit-content;
+          border-radius: 999px;
+          padding: 10px 16px;
+          background: rgba(255, 248, 214, 0.12);
+          color: var(--fuelio-text);
+          font-weight: 700;
+        }
+
+        .fuelio-panel {
+          border-radius: 28px;
+          padding: 22px;
+          background: var(--fuelio-panel);
+          border: 1px solid rgba(255, 248, 214, 0.06);
+          min-width: 0;
+        }
+
+        .fuelio-panel__header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          margin-bottom: 10px;
+        }
+
+        .fuelio-panel__eyebrow {
+          font-size: 0.92rem;
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+          color: var(--fuelio-muted);
+          margin-bottom: 12px;
+        }
+
+        .fuelio-panel__footer,
+        .fuelio-trend__hint {
+          margin-top: 16px;
+          color: var(--fuelio-muted);
+          font-size: 0.9rem;
+        }
+
+        .fuelio-statrows,
+        .fuelio-costblock {
+          display: grid;
+          gap: 14px;
+        }
+
+        .fuelio-costblock + .fuelio-costblock {
+          margin-top: 22px;
+          padding-top: 18px;
+          border-top: 1px solid rgba(255, 248, 214, 0.08);
+        }
+
+        .fuelio-costblock__title {
+          color: var(--fuelio-muted);
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+          font-size: 0.95rem;
+        }
+
+        .fuelio-statrow {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) auto;
+          gap: 18px;
+          align-items: center;
+        }
+
+        .fuelio-statrow__left {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          min-width: 0;
+        }
+
+        .fuelio-statrow__left strong,
+        .fuelio-tripcell strong,
+        .fuelio-trend__value {
+          font-size: 1.05rem;
+          font-weight: 800;
+          letter-spacing: 0.01em;
+        }
+
+        .fuelio-statrow__label,
+        .fuelio-tripcell span,
+        .fuelio-trend__label {
+          color: var(--fuelio-muted);
+          text-align: right;
+        }
+
+        .fuelio-trend {
+          display: grid;
+          grid-template-columns: minmax(180px, 220px) minmax(0, 1fr);
+          gap: 18px;
+          align-items: end;
+        }
+
+        .fuelio-trend__meta {
+          display: grid;
+          gap: 16px;
+        }
+
+        .fuelio-trend__metric {
+          display: grid;
+          gap: 2px;
+        }
+
+        .fuelio-trend__value {
+          font-size: 2rem;
+          line-height: 0.95;
+        }
+
+        .fuelio-trend__value.is-up {
+          color: #f18c7b;
+        }
+
+        .fuelio-trend__value.is-down {
+          color: #7cd48a;
+        }
+
+        .fuelio-trend__chart svg {
+          width: 100%;
+          height: auto;
+          display: block;
+        }
+
+        .fuelio-trend__line {
+          fill: none;
+          stroke: var(--fuelio-line);
+          stroke-width: 4;
+          stroke-linecap: round;
+          stroke-linejoin: round;
+        }
+
+        .fuelio-trend__area {
+          fill: url(#fuelioTrendFill);
+          stroke: none;
+        }
+
+        .fuelio-trend__dot {
+          fill: var(--fuelio-line);
+          opacity: 0.88;
+        }
+
+        .fuelio-trend__dot.is-active {
+          stroke: rgba(247, 241, 204, 0.35);
+          stroke-width: 6;
+        }
+
+        .fuelio-trend__avg {
+          stroke: rgba(247, 241, 204, 0.42);
+          stroke-width: 2;
+          stroke-dasharray: 10 8;
+        }
+
+        .fuelio-trend__axis {
+          display: flex;
+          justify-content: space-between;
+          margin-top: 8px;
+          color: var(--fuelio-muted);
+          font-size: 0.9rem;
+        }
+
+        .fuelio-tripgrid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 16px;
+        }
+
+        .fuelio-tripcell {
+          display: grid;
+          gap: 6px;
+          padding: 16px;
+          border-radius: 18px;
+          background: var(--fuelio-panel-strong);
+          min-width: 0;
+        }
+
+        .fuelio-tripcell span {
+          text-align: left;
+        }
+
+        .fuelio-panel--list {
+          display: grid;
+          gap: 12px;
+        }
+
+        .fuelio-activity {
+          display: grid;
+          grid-template-columns: minmax(0, 1.2fr) auto auto;
+          gap: 14px;
+          align-items: center;
+          padding-bottom: 12px;
+          border-bottom: 1px solid rgba(255, 248, 214, 0.08);
+        }
+
+        .fuelio-activity:last-child {
+          border-bottom: 0;
+          padding-bottom: 0;
+        }
+
+        .fuelio-activity__amount {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          min-width: 0;
+        }
+
+        .fuelio-activity__amount strong {
+          font-size: 1.15rem;
+          font-weight: 800;
+        }
+
+        .fuelio-activity__date,
+        .fuelio-activity__title {
+          color: var(--fuelio-muted);
+          white-space: nowrap;
+        }
+
+        .fuelio-activity__title {
+          text-align: right;
+        }
+
         :host([data-width-mode="md"]) .garage-hero,
         :host([data-width-mode="sm"]) .garage-hero,
         :host([data-width-mode="xs"]) .garage-hero,
@@ -1570,6 +2295,43 @@ class FuelinoCard extends HTMLElement {
         :host([data-width-mode="xs"]) .summary-card__main,
         :host([data-width-mode="xs"]) .cost-card__total {
           font-size: clamp(1.55rem, 9vw, 2.4rem);
+        }
+
+        :host([data-width-mode="md"]) .fuelio-trend,
+        :host([data-width-mode="sm"]) .fuelio-trend,
+        :host([data-width-mode="xs"]) .fuelio-trend {
+          grid-template-columns: 1fr;
+        }
+
+        :host([data-width-mode="sm"]) .fuelio-tripgrid,
+        :host([data-width-mode="xs"]) .fuelio-tripgrid {
+          grid-template-columns: 1fr;
+        }
+
+        :host([data-width-mode="sm"]) .fuelio-activity,
+        :host([data-width-mode="xs"]) .fuelio-activity {
+          grid-template-columns: 1fr;
+          gap: 6px;
+        }
+
+        :host([data-width-mode="sm"]) .fuelio-activity__title,
+        :host([data-width-mode="xs"]) .fuelio-activity__title,
+        :host([data-width-mode="sm"]) .fuelio-statrow__label,
+        :host([data-width-mode="xs"]) .fuelio-statrow__label {
+          text-align: left;
+        }
+
+        :host([data-width-mode="xs"]) .fuelio-shell {
+          padding: 16px;
+        }
+
+        :host([data-width-mode="xs"]) .fuelio-panel {
+          padding: 18px;
+          border-radius: 22px;
+        }
+
+        :host([data-width-mode="xs"]) .fuelio-header h2 {
+          font-size: 1.85rem;
         }
 
         @media (min-width: 920px) {

@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.3.4
+## v0.3.5
 
 Follow-up release for `FuelinoHA Card`.
 
@@ -9,6 +9,7 @@ Follow-up release for `FuelinoHA Card`.
 - added the custom Lovelace card without a build step
 - added the visual editor for Home Assistant card configuration
 - added `costs`, `garage`, and `compact` layouts
+- added a new `fuelio` stats layout inspired by the Fuelio mobile overview screens
 - improved responsiveness for narrow dashboard columns so the card behaves better in dense multi-column views
 - inlined the card editor into `fuelino-card.js` so the visual editor works reliably when installed through HACS
 - stopped throwing a hard config error when Home Assistant briefly initializes the card without a `vehicle` value
