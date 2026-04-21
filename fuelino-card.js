@@ -2106,21 +2106,31 @@ class FuelinoCard extends HTMLElement {
         }
 
         .fuelio-shell {
-          --fuelio-bg: var(--card-olive);
-          --fuelio-bg-deep: var(--card-olive-deep);
+          --fuelio-bg: #10172a;
+          --fuelio-bg-mid: #17223d;
+          --fuelio-bg-deep: #0f1220;
           --fuelio-panel: rgba(255, 255, 255, 0.06);
           --fuelio-panel-strong: rgba(255, 255, 255, 0.09);
-          --fuelio-text: var(--card-text);
-          --fuelio-muted: var(--card-muted);
-          --fuelio-line: color-mix(in srgb, var(--card-green) 72%, white);
-          --fuelio-down: var(--card-red);
-          background: linear-gradient(180deg, var(--fuelio-bg) 0%, var(--fuelio-bg-deep) 100%);
+          --fuelio-text: #f6f7fb;
+          --fuelio-muted: rgba(246, 247, 251, 0.68);
+          --fuelio-line: color-mix(in srgb, var(--accent) 78%, white);
+          --fuelio-down: #ea6c62;
+          background:
+            radial-gradient(circle at top right, color-mix(in srgb, var(--accent) 50%, transparent), transparent 38%),
+            linear-gradient(145deg, var(--fuelio-bg) 0%, var(--fuelio-bg-mid) 45%, var(--fuelio-bg-deep) 100%);
           color: var(--fuelio-text);
           padding: 22px;
           display: grid;
           gap: 18px;
           min-width: 0;
           box-sizing: border-box;
+        }
+
+        .fuelio-shell ha-icon,
+        .fuelio-trend__eyebrow ha-icon,
+        .fuelio-statrow__left ha-icon,
+        .fuelio-activity__amount ha-icon {
+          color: color-mix(in srgb, var(--accent) 80%, white);
         }
 
         .fuelio-header {
@@ -2223,6 +2233,7 @@ class FuelinoCard extends HTMLElement {
           background: var(--fuelio-panel);
           border: 1px solid rgba(255, 255, 255, 0.06);
           min-width: 0;
+          backdrop-filter: blur(10px);
         }
 
         .fuelio-panel__header {
@@ -2319,11 +2330,11 @@ class FuelinoCard extends HTMLElement {
         }
 
         .fuelio-trend__value.is-up {
-          color: var(--card-red);
+          color: var(--fuelio-down);
         }
 
         .fuelio-trend__value.is-down {
-          color: var(--card-green);
+          color: color-mix(in srgb, var(--accent) 82%, white);
         }
 
         .fuelio-trend__chart svg {
