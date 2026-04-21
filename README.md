@@ -1,5 +1,17 @@
 # FuelinoHA Card
 
+[![Release](https://img.shields.io/github/v/release/dzudzua/fuelinoHA-card?display_name=tag)](https://github.com/dzudzua/fuelinoHA-card/releases)
+[![Stargazers](https://img.shields.io/github/stars/dzudzua/fuelinoHA-card?style=flat)](https://github.com/dzudzua/fuelinoHA-card/stargazers)
+[![HACS](https://img.shields.io/badge/HACS-Dashboard-41BDF5.svg)](https://hacs.xyz/)
+[![GitHub last release date](https://img.shields.io/github/release-date/dzudzua/fuelinoHA-card)](https://github.com/dzudzua/fuelinoHA-card/releases)
+[![GitHub last commit](https://img.shields.io/github/last-commit/dzudzua/fuelinoHA-card)](https://github.com/dzudzua/fuelinoHA-card/commits/main)
+[![Contributors](https://img.shields.io/github/contributors/dzudzua/fuelinoHA-card)](https://github.com/dzudzua/fuelinoHA-card/graphs/contributors)
+[![Forks](https://img.shields.io/github/forks/dzudzua/fuelinoHA-card)](https://github.com/dzudzua/fuelinoHA-card/network/members)
+[![Issues](https://img.shields.io/github/issues/dzudzua/fuelinoHA-card)](https://github.com/dzudzua/fuelinoHA-card/issues)
+[![Lines of code](https://img.shields.io/tokei/lines/github/dzudzua/fuelinoHA-card)](https://github.com/dzudzua/fuelinoHA-card)
+[![Code size](https://img.shields.io/github/repo-size/dzudzua/fuelinoHA-card)](https://github.com/dzudzua/fuelinoHA-card)
+[![MIT License](https://img.shields.io/github/license/dzudzua/fuelinoHA-card)](https://github.com/dzudzua/fuelinoHA-card/blob/main/LICENSE)
+
 Custom Lovelace card for Home Assistant built on top of the `FuelinoHA` / `Fuelino` integration.
 
 This project is intended as a separate frontend companion project for vehicle dashboards.
@@ -103,4 +115,4 @@ See:
 
 If Fuelino helps you, you can support development here:
 
-[![Buy Me a Coffee](https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png)](https://www.buymeacoffee.com/dzudzua)
+<a href="https://www.buymeacoffee.com/dzudzua" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-blue.png" alt="Buy Me a Coffee" style="height: 60px !important;width: 217px !important;"></a>
