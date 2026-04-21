@@ -11,6 +11,7 @@ MVP scaffold.
 Current features:
 
 - custom card without build step
+- built-in visual editor for Home Assistant card configuration
 - three layouts:
   - `costs`
   - `garage`
@@ -36,7 +37,7 @@ Current features:
 
 ### Manual
 
-1. Copy `fuelino-card.js` to your Home Assistant `www` folder
+1. Copy `fuelino-card.js` and `fuelino-card-editor.js` to your Home Assistant `www` folder
 2. Add it as a Lovelace resource
 3. Use the card in a dashboard
 
@@ -65,6 +66,10 @@ Supported options:
 - `show_expenses`: `true` / `false`
 - `show_trips`: `true` / `false`
 - `show_empty_categories`: show expense category cards even when total is `0`
+- `show_header`: show or hide the app-like header in the `costs` layout
+- `dense_mode`: tighter spacing for smaller dashboards
+- `card_background`: optional custom CSS background
+- `border_radius`: optional card radius override
 
 ## Example entity mapping
 
@@ -92,3 +97,4 @@ See:
 - this project is scaffolded inside the current workspace, but intended to become its own GitHub repository
 - it is designed specifically around the sensor model exposed by `FuelinoHA`
 - the new `costs` layout is inspired by the mobile Fuelio/Fuelino statistics screens and is intended as the primary layout
+- the visual editor currently focuses on `Base`, `Visibility`, and `Style` tabs with live preview

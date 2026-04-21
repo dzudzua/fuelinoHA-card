@@ -1,6 +1,7 @@
 class FuelinoCard extends HTMLElement {
-  static getConfigElement() {
-    return document.createElement("div");
+  static async getConfigElement() {
+    await import("./fuelino-card-editor.js");
+    return document.createElement("fuelino-card-editor");
   }
 
   static getStubConfig() {
@@ -9,6 +10,10 @@ class FuelinoCard extends HTMLElement {
       vehicle: "hyundai_i30",
       title: "Hyundai i30",
       layout: "costs",
+      show_expenses: true,
+      show_trips: true,
+      show_empty_categories: false,
+      show_header: true,
     };
   }
 
@@ -21,9 +26,13 @@ class FuelinoCard extends HTMLElement {
       title: null,
       layout: "costs",
       accent_color: "#88d24f",
+      card_background: "",
+      border_radius: 28,
       show_expenses: true,
       show_trips: true,
       show_empty_categories: false,
+      show_header: true,
+      dense_mode: false,
       ...config,
     };
 
@@ -87,12 +96,7 @@ class FuelinoCard extends HTMLElement {
   }
 
   _locale() {
-    return (
-      this._hass?.locale?.language ||
-      this._hass?.language ||
-      navigator.language ||
-      "cs-CZ"
-    );
+    return this._hass?.locale?.language || this._hass?.language || navigator.language || "cs-CZ";
   }
 
   _formatNumber(value, options = {}) {
@@ -124,7 +128,7 @@ class FuelinoCard extends HTMLElement {
     if (numeric !== null) {
       const precision =
         entity.attributes?.suggested_display_precision ??
-        (unit && (unit.includes("Kc") || unit.includes("CZK") || unit.includes("/") ? 2 : 1));
+        (unit && (unit.includes("Kč") || unit.includes("CZK") || unit.includes("/") ? 2 : 1));
       const value = this._formatNumber(numeric, {
         minimumFractionDigits: precision,
         maximumFractionDigits: precision,
@@ -144,10 +148,9 @@ class FuelinoCard extends HTMLElement {
     if (!Number.isFinite(numeric)) {
       return String(value);
     }
-    const decimals = Math.abs(numeric) >= 1000 ? 2 : 2;
     const formatted = this._formatNumber(numeric, {
-      minimumFractionDigits: decimals,
-      maximumFractionDigits: decimals,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     });
     return currencyUnit ? `${formatted} ${currencyUnit}` : formatted;
   }
@@ -213,41 +216,13 @@ class FuelinoCard extends HTMLElement {
 
   _categoryCards() {
     const categories = [
-      {
-        title: "Sluzba",
-        aliases: ["sluzba", "service", "maintenance", "udrzba"],
-        icon: "mdi:wrench",
-      },
-      {
-        title: "Udrzba",
-        aliases: ["udrzba", "maintenance"],
-        icon: "mdi:car-wrench",
-      },
-      {
-        title: "Registrace",
-        aliases: ["registrace", "registration"],
-        icon: "mdi:card-account-details",
-      },
-      {
-        title: "Parkovani",
-        aliases: ["parkovani", "parking"],
-        icon: "mdi:parking",
-      },
-      {
-        title: "Myti",
-        aliases: ["myti", "wash", "nanowax"],
-        icon: "mdi:car-wash",
-      },
-      {
-        title: "Mytne",
-        aliases: ["mytne", "toll"],
-        icon: "mdi:road-toll",
-      },
-      {
-        title: "Pojisteni",
-        aliases: ["pojisteni", "insurance"],
-        icon: "mdi:shield-car",
-      },
+      { title: "Služba", aliases: ["sluzba", "service"], icon: "mdi:briefcase-variant-outline" },
+      { title: "Údržba", aliases: ["udrzba", "maintenance"], icon: "mdi:car-wrench" },
+      { title: "Registrace", aliases: ["registrace", "registration"], icon: "mdi:card-account-details" },
+      { title: "Parkování", aliases: ["parkovani", "parking"], icon: "mdi:parking" },
+      { title: "Mytí", aliases: ["myti", "wash", "nanowax"], icon: "mdi:car-wash" },
+      { title: "Mýtné", aliases: ["mytne", "toll"], icon: "mdi:road-toll" },
+      { title: "Pojištění", aliases: ["pojisteni", "insurance"], icon: "mdi:shield-car" },
     ];
 
     const totalExpense = this._number("total_expense_cost") || 0;
@@ -276,12 +251,16 @@ class FuelinoCard extends HTMLElement {
             </div>
             <div class="cost-card__divider"></div>
             <div class="cost-card__stats">
-              ${this._miniStat("Podil", `${this._formatNumber(share, {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 1,
-              })} %`, "mdi:chart-donut")}
-              ${this._miniStat("Zaznamy", this._formatNumber(count), "mdi:counter")}
-              ${this._miniStat("Posledni vydaj", this._formatCurrencyValue(latestCost), "mdi:cash")}
+              ${this._miniStat(
+                "Podíl",
+                `${this._formatNumber(share, {
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 1,
+                })} %`,
+                "mdi:chart-donut"
+              )}
+              ${this._miniStat("Záznamy", this._formatNumber(count), "mdi:counter")}
+              ${this._miniStat("Poslední výdaj", this._formatCurrencyValue(latestCost), "mdi:cash")}
               ${this._miniStat("Datum", latestDate, "mdi:calendar")}
             </div>
           </section>
@@ -290,7 +269,7 @@ class FuelinoCard extends HTMLElement {
       .filter(Boolean)
       .join("");
 
-    return cards || `<section class="empty-note">Kategorie vydaju zatim nejsou k dispozici.</section>`;
+    return cards || `<section class="empty-note">Kategorie výdajů zatím nejsou k dispozici.</section>`;
   }
 
   _miniStat(label, value, icon) {
@@ -351,16 +330,16 @@ class FuelinoCard extends HTMLElement {
         </div>
         <div class="hero-stats">
           <div class="hero-stat-card">
-            <div class="hero-stat-card__label">Prumerne naklady na kilometr</div>
+            <div class="hero-stat-card__label">Průměrné náklady na kilometr</div>
             <div class="hero-stat-card__main">${averageTotalPerKm}</div>
             <div class="hero-stat-card__sub">${fuelPerKm}</div>
-            <div class="hero-stat-card__hint">Aktualni prumer</div>
+            <div class="hero-stat-card__hint">Aktuální průměr</div>
           </div>
           <div class="hero-stat-card">
-            <div class="hero-stat-card__label">Pocet zaznamu</div>
+            <div class="hero-stat-card__label">Počet záznamů</div>
             <div class="hero-stat-card__main">${expenseCount}</div>
             <div class="hero-stat-card__sub">${fillCount}</div>
-            <div class="hero-stat-card__hint">Vydaje / tankovani</div>
+            <div class="hero-stat-card__hint">Výdaje / tankování</div>
           </div>
         </div>
       </section>
@@ -379,12 +358,15 @@ class FuelinoCard extends HTMLElement {
     return `
       <ha-card>
         <div class="shell">
+          ${
+            this._config.show_header
+              ? `
           <header class="topbar">
             <div class="topbar__left">
               <div class="topbar__menu"><ha-icon icon="mdi:menu"></ha-icon></div>
               <div>
                 <div class="topbar__eyebrow">FuelinoHA</div>
-                <h2>Statistika nakladu</h2>
+                <h2>Statistika nákladů</h2>
               </div>
             </div>
             <div class="topbar__controls">
@@ -392,36 +374,39 @@ class FuelinoCard extends HTMLElement {
               <div class="topbar__action"><ha-icon icon="mdi:clipboard-text-outline"></ha-icon></div>
             </div>
           </header>
+          `
+              : ""
+          }
 
           ${this._topPanel()}
 
           <section class="summary-grid">
-            ${this._summaryBlock("Naklady (s palivem)", totalVehicle, [
-              { label: "Palivo tento mesic", value: this._formatState("fuel_cost_this_month"), icon: "mdi:gas-station-outline" },
-              { label: "Vydaje tento mesic", value: this._formatState("expense_cost_this_month"), icon: "mdi:wallet-outline" },
-              { label: "Posledni vydaj", value: lastExpenseDate, icon: "mdi:calendar-star" },
-              { label: "Posledni tankovani", value: lastFillDate, icon: "mdi:calendar-check" },
+            ${this._summaryBlock("Náklady (s palivem)", totalVehicle, [
+              { label: "Palivo tento měsíc", value: this._formatState("fuel_cost_this_month"), icon: "mdi:gas-station-outline" },
+              { label: "Výdaje tento měsíc", value: this._formatState("expense_cost_this_month"), icon: "mdi:wallet-outline" },
+              { label: "Poslední výdaj", value: lastExpenseDate, icon: "mdi:calendar-star" },
+              { label: "Poslední tankování", value: lastFillDate, icon: "mdi:calendar-check" },
             ])}
 
-            ${this._summaryBlock("Naklady (bez paliva)", totalExpenses, [
-              { label: "Tento mesic", value: this._formatState("expense_cost_this_month"), icon: "mdi:calendar-month" },
-              { label: "Posledni servis", value: lastServiceDate, icon: "mdi:wrench-clock" },
+            ${this._summaryBlock("Náklady (bez paliva)", totalExpenses, [
+              { label: "Tento měsíc", value: this._formatState("expense_cost_this_month"), icon: "mdi:calendar-month" },
+              { label: "Poslední servis", value: lastServiceDate, icon: "mdi:wrench-clock" },
               { label: "Top kategorie", value: topCategory, icon: "mdi:shape-outline" },
-              { label: "Pocet vydaju", value: this._formatState("expense_count"), icon: "mdi:counter" },
+              { label: "Počet výdajů", value: this._formatState("expense_count"), icon: "mdi:counter" },
             ])}
 
             ${this._summaryBlock("Palivo", totalFuel, [
-              { label: "Tento mesic", value: this._formatState("fuel_cost_this_month"), icon: "mdi:calendar-month" },
+              { label: "Tento měsíc", value: this._formatState("fuel_cost_this_month"), icon: "mdi:calendar-month" },
               { label: "Cena za litr", value: this._formatState("last_price_per_unit"), icon: "mdi:cash-100" },
-              { label: "Prumer", value: this._formatState("average_price"), icon: "mdi:finance" },
-              { label: "Tankovani", value: this._formatState("fill_count"), icon: "mdi:counter" },
+              { label: "Průměr", value: this._formatState("average_price"), icon: "mdi:finance" },
+              { label: "Tankování", value: this._formatState("fill_count"), icon: "mdi:counter" },
             ], "fuel")}
           </section>
 
           <section class="section-head">
             <div>
               <div class="section-head__eyebrow">Kategorie</div>
-              <h3>Statistika nakladu</h3>
+              <h3>Statistika nákladů</h3>
             </div>
           </section>
 
@@ -446,7 +431,7 @@ class FuelinoCard extends HTMLElement {
             <div class="garage-hero__copy">
               <div class="topbar__eyebrow">FuelinoHA</div>
               <h2>${title}</h2>
-              <p>Posledni tankovani: <strong>${this._formatState("last_fill_date")}</strong></p>
+              <p>Poslední tankování: <strong>${this._formatState("last_fill_date")}</strong></p>
             </div>
             <div class="garage-hero__stats">
               ${this._miniMetric("Cena", this._formatState("last_fill_cost"), "is-primary")}
@@ -457,10 +442,10 @@ class FuelinoCard extends HTMLElement {
 
           <section class="garage-grid">
             <div class="garage-panel">
-              <div class="garage-panel__title">Palivo a naklady</div>
+              <div class="garage-panel__title">Palivo a náklady</div>
               <div class="garage-metrics">
-                ${this._miniMetric("Palivo tento mesic", this._formatState("fuel_cost_this_month"))}
-                ${this._miniMetric("Palivo minuly mesic", this._formatState("last_month_cost"))}
+                ${this._miniMetric("Palivo tento měsíc", this._formatState("fuel_cost_this_month"))}
+                ${this._miniMetric("Palivo minulý měsíc", this._formatState("last_month_cost"))}
                 ${this._miniMetric("Cena za km", this._formatState("average_cost_per_km"))}
                 ${this._miniMetric("Trend ceny", this._formatState("fuel_price_trend"))}
               </div>
@@ -470,10 +455,10 @@ class FuelinoCard extends HTMLElement {
               this._config.show_expenses
                 ? `
               <div class="garage-panel">
-                <div class="garage-panel__title">Servis a vydaje</div>
+                <div class="garage-panel__title">Servis a výdaje</div>
                 <div class="garage-metrics">
-                  ${this._miniMetric("Tento mesic", this._formatState("expense_cost_this_month"))}
-                  ${this._miniMetric("Posledni servis", this._formatState("last_service_date"))}
+                  ${this._miniMetric("Tento měsíc", this._formatState("expense_cost_this_month"))}
+                  ${this._miniMetric("Poslední servis", this._formatState("last_service_date"))}
                   ${this._miniMetric("Cena servisu", this._formatState("last_service_cost"))}
                   ${this._miniMetric("Top kategorie", this._formatState("top_expense_category"))}
                 </div>
@@ -486,12 +471,12 @@ class FuelinoCard extends HTMLElement {
               this._config.show_trips
                 ? `
               <div class="garage-panel">
-                <div class="garage-panel__title">TripLog a jizdy</div>
+                <div class="garage-panel__title">TripLog a jízdy</div>
                 <div class="garage-metrics">
-                  ${this._miniMetric("Posledni jizda", this._formatState("last_trip_date"))}
-                  ${this._miniMetric("Posledni vzdalenost", this._formatState("last_trip_distance"))}
-                  ${this._miniMetric("Pocet jizd", this._formatState("trip_count"))}
-                  ${this._miniMetric("Celkova vzdalenost", this._formatState("total_trip_distance"))}
+                  ${this._miniMetric("Poslední jízda", this._formatState("last_trip_date"))}
+                  ${this._miniMetric("Poslední vzdálenost", this._formatState("last_trip_distance"))}
+                  ${this._miniMetric("Počet jízd", this._formatState("trip_count"))}
+                  ${this._miniMetric("Celková vzdálenost", this._formatState("total_trip_distance"))}
                 </div>
               </div>
             `
@@ -500,20 +485,20 @@ class FuelinoCard extends HTMLElement {
           </section>
 
           <section class="garage-list-grid">
-            ${this._renderRecentList("Posledni tankovani", recentFills, (fill) =>
+            ${this._renderRecentList("Poslední tankování", recentFills, (fill) =>
               `<strong>${fill.date ?? "?"}</strong> · ${fill.volume ?? "?"} L · ${fill.cost ?? "?"}`
             )}
             ${
               this._config.show_expenses
-                ? this._renderRecentList("Posledni vydaje", recentExpenses, (expense) =>
-                    `<strong>${expense.date ?? "?"}</strong> · ${expense.title ?? "Bez nazvu"} · ${expense.cost ?? "?"}`
+                ? this._renderRecentList("Poslední výdaje", recentExpenses, (expense) =>
+                    `<strong>${expense.date ?? "?"}</strong> · ${expense.title ?? "Bez názvu"} · ${expense.cost ?? "?"}`
                   )
                 : ""
             }
             ${
               this._config.show_trips
-                ? this._renderRecentList("Posledni jizdy", recentTrips, (trip) =>
-                    `<strong>${trip.date ?? "?"}</strong> · ${trip.title ?? "Bez nazvu"} · ${trip.distance_km ?? "?"} km`
+                ? this._renderRecentList("Poslední jízdy", recentTrips, (trip) =>
+                    `<strong>${trip.date ?? "?"}</strong> · ${trip.title ?? "Bez názvu"} · ${trip.distance_km ?? "?"} km`
                   )
                 : ""
             }
@@ -582,6 +567,12 @@ class FuelinoCard extends HTMLElement {
       cardHtml = this._renderCompact();
     }
 
+    const background =
+      this._config.card_background ||
+      "linear-gradient(180deg, var(--card-olive) 0%, var(--card-olive-deep) 100%)";
+    const radius = Number(this._config.border_radius) || 28;
+    const denseGap = this._config.dense_mode ? 12 : 18;
+
     this.shadowRoot.innerHTML = `
       <style>
         :host {
@@ -589,17 +580,16 @@ class FuelinoCard extends HTMLElement {
           --card-olive: #3a3413;
           --card-olive-deep: #262004;
           --card-olive-panel: #4a431a;
-          --card-olive-soft: #585126;
           --card-text: #f4f5ef;
           --card-muted: rgba(244, 245, 239, 0.74);
           --card-divider: rgba(255, 255, 255, 0.14);
-          --card-green: #85d854;
+          --card-green: ${this._config.accent_color};
           --card-red: #ea4738;
         }
 
         ha-card {
           overflow: hidden;
-          border-radius: 28px;
+          border-radius: ${radius}px;
           box-shadow: none;
         }
 
@@ -610,11 +600,11 @@ class FuelinoCard extends HTMLElement {
         }
 
         .shell {
-          background: linear-gradient(180deg, var(--card-olive) 0%, var(--card-olive-deep) 100%);
+          background: ${background};
           color: var(--card-text);
-          padding: 18px;
+          padding: ${this._config.dense_mode ? 14 : 18}px;
           display: grid;
-          gap: 18px;
+          gap: ${denseGap}px;
         }
 
         .topbar {
@@ -680,19 +670,19 @@ class FuelinoCard extends HTMLElement {
         .garage-hero__stats,
         .compact-shell {
           background: var(--card-olive-panel);
-          border-radius: 28px;
+          border-radius: ${Math.max(radius - 4, 18)}px;
         }
 
         .hero-panel {
-          padding: 24px;
+          padding: ${this._config.dense_mode ? 18 : 24}px;
           display: grid;
-          gap: 18px;
+          gap: ${this._config.dense_mode ? 12 : 18}px;
         }
 
         .hero-illustration {
           position: relative;
           min-height: 200px;
-          border-radius: 22px;
+          border-radius: ${Math.max(radius - 8, 16)}px;
           background: rgba(255, 255, 255, 0.03);
           overflow: hidden;
         }
@@ -838,12 +828,12 @@ class FuelinoCard extends HTMLElement {
         .summary-grid,
         .cost-grid {
           display: grid;
-          gap: 18px;
+          gap: ${denseGap}px;
         }
 
         .summary-card,
         .cost-card {
-          padding: 22px;
+          padding: ${this._config.dense_mode ? 18 : 22}px;
         }
 
         .summary-card__divider,
