@@ -231,6 +231,13 @@ function ensureFuelinoCardEditorDefined() {
             padding: 20px;
           }
 
+          .preview {
+            min-width: 0;
+            overflow: hidden;
+            position: relative;
+            isolation: isolate;
+          }
+
           .panel__header {
             display: grid;
             gap: 4px;
@@ -327,8 +334,18 @@ function ensureFuelinoCardEditorDefined() {
             margin-bottom: 12px;
           }
 
+          .preview__frame {
+            min-width: 0;
+            max-width: 100%;
+            overflow: hidden;
+            border-radius: 24px;
+          }
+
           fuelino-card {
             display: block;
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
           }
 
           @media (max-width: 920px) {
@@ -352,7 +369,9 @@ function ensureFuelinoCardEditorDefined() {
           </section>
           <section class="preview">
             <div class="preview__title">Live preview</div>
-            <fuelino-card></fuelino-card>
+            <div class="preview__frame">
+              <fuelino-card></fuelino-card>
+            </div>
           </section>
         </div>
       `;

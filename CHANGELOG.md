@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.3.15
+
+Follow-up release for `FuelinoHA Card`.
+
+### Highlights
+
+- fixed the visual editor live preview so the preview card is clipped to a single frame instead of spilling into a duplicated-looking overlay
+- constrained the embedded preview card to the editor column width
+- added an explicit preview frame wrapper to keep editor rendering stable in Home Assistant's modal layout
+
 ## v0.3.14
 
 Follow-up release for `FuelinoHA Card`.
