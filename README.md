@@ -98,3 +98,9 @@ See:
 - it is designed specifically around the sensor model exposed by `FuelinoHA`
 - the new `costs` layout is inspired by the mobile Fuelio/Fuelino statistics screens and is intended as the primary layout
 - the visual editor currently focuses on `Base`, `Visibility`, and `Style` tabs with live preview
+
+## Support
+
+If Fuelino helps you, you can support development here:
+
+[![Buy Me a Coffee](https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png)](https://www.buymeacoffee.com/dzudzua)
