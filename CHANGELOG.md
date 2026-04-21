@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.3.16
+
+Follow-up release for `FuelinoHA Card`.
+
+### Highlights
+
+- added per-column labels under the bar charts so each bar shows its own date or month directly below the graph
+- used compact date labels for fill-based charts and compact month labels for monthly summary charts
+- kept the existing trend carousel and chart styling while making bar graphs easier to read at a glance
+
 ## v0.3.15
 
 Follow-up release for `FuelinoHA Card`.

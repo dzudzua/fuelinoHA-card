@@ -873,6 +873,34 @@ class FuelinoCard extends HTMLElement {
     return palettes[kind] || palettes.default;
   }
 
+  _compactDateLabel(date) {
+    if (!date) {
+      return "N/A";
+    }
+    const parsed = new Date(date);
+    if (Number.isNaN(parsed.getTime())) {
+      return String(date);
+    }
+    return new Intl.DateTimeFormat("cs-CZ", {
+      day: "2-digit",
+      month: "2-digit",
+    }).format(parsed);
+  }
+
+  _compactMonthLabel(year, month) {
+    if (!year || !month) {
+      return "N/A";
+    }
+    const parsed = new Date(`${year}-${String(month).padStart(2, "0")}-01`);
+    if (Number.isNaN(parsed.getTime())) {
+      return `${month}/${String(year).slice(-2)}`;
+    }
+    return new Intl.DateTimeFormat("cs-CZ", {
+      month: "short",
+      year: "2-digit",
+    }).format(parsed).replace(/\.$/, "");
+  }
+
   _setFuelioTrendSlide(index, total = null) {
     const count = total ?? this._buildFuelioTrendCards().length;
     if (!count) {
@@ -939,6 +967,7 @@ class FuelinoCard extends HTMLElement {
         average: this._average(values),
         delta: this._formatTrendDeltaValue(values[values.length - 1], values[values.length - 2]),
         values,
+        labels: volumeFills.map((item) => this._compactDateLabel(item.date)),
         unit: this._unit("average_fill_volume") || "L",
         xStart: this._formatDate(volumeFills[0]?.date, { day: "2-digit", month: "short" }),
         xEnd: this._formatDate(volumeFills[volumeFills.length - 1]?.date, { day: "2-digit", month: "short" }),
@@ -957,6 +986,7 @@ class FuelinoCard extends HTMLElement {
         average: this._average(values),
         delta: this._formatTrendDeltaValue(values[values.length - 1], values[values.length - 2]),
         values,
+        labels: fillCostFills.map((item) => this._compactDateLabel(item.date)),
         unit: this._unit("fuel_cost_this_month") || "CZK",
         xStart: this._formatDate(fillCostFills[0]?.date, { day: "2-digit", month: "short" }),
         xEnd: this._formatDate(fillCostFills[fillCostFills.length - 1]?.date, { day: "2-digit", month: "short" }),
@@ -977,6 +1007,7 @@ class FuelinoCard extends HTMLElement {
           average: this._average(values),
           delta: this._formatTrendDeltaValue(values[values.length - 1], values[values.length - 2]),
           values,
+          labels: fuelCosts.map((item) => this._compactMonthLabel(item.year, item.month)),
           unit: this._unit("fuel_cost_this_month") || "CZK",
           xStart: this._formatDate(`${fuelCosts[0].year}-${String(fuelCosts[0].month).padStart(2, "0")}-01`, { month: "short", year: "2-digit" }),
           xEnd: this._formatDate(`${fuelCosts[fuelCosts.length - 1].year}-${String(fuelCosts[fuelCosts.length - 1].month).padStart(2, "0")}-01`, { month: "short", year: "2-digit" }),
@@ -995,6 +1026,7 @@ class FuelinoCard extends HTMLElement {
           average: this._average(values),
           delta: this._formatTrendDeltaValue(values[values.length - 1], values[values.length - 2]),
           values,
+          labels: distances.map((item) => this._compactMonthLabel(item.year, item.month)),
           unit: this._unit("distance_this_month"),
           xStart: this._formatDate(`${distances[0].year}-${String(distances[0].month).padStart(2, "0")}-01`, { month: "short", year: "2-digit" }),
           xEnd: this._formatDate(`${distances[distances.length - 1].year}-${String(distances[distances.length - 1].month).padStart(2, "0")}-01`, { month: "short", year: "2-digit" }),
@@ -1104,7 +1136,10 @@ class FuelinoCard extends HTMLElement {
                     .map(
                       (height, index) => `
                     <div class="fuelio-bars__col">
-                      <div class="fuelio-bars__bar ${index === heights.length - 1 ? "is-active" : ""}" style="height:${height.toFixed(1)}px"></div>
+                      <div class="fuelio-bars__plot">
+                        <div class="fuelio-bars__bar ${index === heights.length - 1 ? "is-active" : ""}" style="height:${height.toFixed(1)}px"></div>
+                      </div>
+                      <div class="fuelio-bars__label" title="${(card.labels?.[index] || "").replace(/"/g, "&quot;")}">${card.labels?.[index] || ""}</div>
                     </div>
                   `
                     )
@@ -2823,13 +2858,12 @@ class FuelinoCard extends HTMLElement {
         }
 
         .fuelio-bars {
-          height: 180px;
           display: grid;
           grid-template-columns: repeat(6, minmax(0, 1fr));
           gap: 14px;
-          align-items: end;
           padding: 0 8px;
           position: relative;
+          align-items: end;
         }
 
         .fuelio-bars::before {
@@ -2842,9 +2876,16 @@ class FuelinoCard extends HTMLElement {
         }
 
         .fuelio-bars__col {
-          height: 100%;
+          display: grid;
+          grid-template-rows: 180px auto;
+          gap: 10px;
+          min-width: 0;
+        }
+
+        .fuelio-bars__plot {
           display: flex;
           align-items: end;
+          height: 180px;
         }
 
         .fuelio-bars__bar {
@@ -2862,6 +2903,16 @@ class FuelinoCard extends HTMLElement {
             inset 0 0 0 1px rgba(255, 255, 255, 0.12),
             0 0 0 2px rgba(255, 255, 255, 0.18),
             0 16px 32px rgba(13, 19, 36, 0.34);
+        }
+
+        .fuelio-bars__label {
+          min-width: 0;
+          color: var(--fuelio-muted);
+          font-size: 0.78rem;
+          line-height: 1.2;
+          text-align: center;
+          word-break: break-word;
+          text-wrap: balance;
         }
 
         .fuelio-tripgrid {
