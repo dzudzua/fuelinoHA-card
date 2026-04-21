@@ -25,7 +25,6 @@ Current features:
 - three layouts:
   - `costs`
   - `fuelio`
-  - `garage`
   - `compact`
 - interactive fuel trend carousel with swipe and click navigation
 - configurable graph period for the `fuelio` layout
@@ -68,7 +67,7 @@ type: module
 type: custom:fuelino-card
 vehicle: hyundai_i30
 title: Hyundai i30
-layout: garage
+layout: fuelio
 trend_period: 180d
 ```
 
@@ -76,7 +75,7 @@ Supported options:
 
 - `vehicle`: vehicle slug used in entity ids, for example `hyundai_i30`
 - `title`: optional title override
-- `layout`: `garage`, `costs`, `fuelio`, or `compact`
+- `layout`: `costs`, `fuelio`, or `compact`
 - `trend_period`: `30d`, `90d`, `180d`, `365d`, or `all`
 - `accent_color`: optional CSS color for the main accent
 - `show_expenses`: `true` / `false`
@@ -105,7 +104,7 @@ If `vehicle: hyundai_i30`, the card will read entities like:
 See:
 
 - `examples/costs.yaml`
-- `examples/garage.yaml`
+- `examples/fuelio.yaml`
 - `examples/compact.yaml`
 
 ## Notes

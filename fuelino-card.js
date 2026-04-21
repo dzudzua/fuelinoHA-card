@@ -17,7 +17,7 @@ function ensureFuelinoCardEditorDefined() {
         type: "custom:fuelino-card",
         vehicle: "",
         title: "",
-        layout: "garage",
+        layout: "fuelio",
         trend_period: "180d",
         accent_color: "#88d24f",
         card_background: "",
@@ -153,7 +153,6 @@ function ensureFuelinoCardEditorDefined() {
           ${this._select("Layout", "layout", [
             { value: "costs", label: "Costs" },
             { value: "fuelio", label: "Fuelio Stats" },
-            { value: "garage", label: "Garage" },
             { value: "compact", label: "Compact" },
           ])}
           ${this._select("Trend period", "trend_period", [
@@ -389,7 +388,7 @@ class FuelinoCard extends HTMLElement {
       type: "custom:fuelino-card",
       vehicle: "hyundai_i30",
       title: "Hyundai i30",
-      layout: "garage",
+      layout: "fuelio",
       trend_period: "180d",
       show_expenses: true,
       show_trips: true,
@@ -402,7 +401,7 @@ class FuelinoCard extends HTMLElement {
     this._config = {
       title: null,
       vehicle: "",
-      layout: "garage",
+      layout: "fuelio",
       trend_period: "180d",
       accent_color: "#88d24f",
       card_background: "",
@@ -1896,15 +1895,13 @@ class FuelinoCard extends HTMLElement {
     let cardHtml = this._renderCosts();
     if (this._config.layout === "fuelio") {
       cardHtml = this._renderFuelioStats();
-    } else if (this._config.layout === "garage") {
-      cardHtml = this._renderGarage();
     } else if (this._config.layout === "compact") {
       cardHtml = this._renderCompact();
     }
 
     const background =
       this._config.card_background ||
-      "linear-gradient(180deg, var(--card-olive) 0%, var(--card-olive-deep) 100%)";
+      "radial-gradient(circle at top right, color-mix(in srgb, var(--card-green) 50%, transparent), transparent 38%), linear-gradient(145deg, var(--card-olive) 0%, var(--card-olive-mid) 45%, var(--card-olive-deep) 100%)";
     const radius = Number(this._config.border_radius) || 28;
     const denseGap = this._config.dense_mode ? 12 : 18;
 
@@ -1913,14 +1910,15 @@ class FuelinoCard extends HTMLElement {
         :host {
           display: block;
           min-width: 0;
-          --card-olive: #3a3413;
-          --card-olive-deep: #262004;
-          --card-olive-panel: #4a431a;
-          --card-text: #f4f5ef;
-          --card-muted: rgba(244, 245, 239, 0.74);
+          --card-olive: #10172a;
+          --card-olive-mid: #17223d;
+          --card-olive-deep: #0f1220;
+          --card-olive-panel: rgba(255, 255, 255, 0.06);
+          --card-text: #f6f7fb;
+          --card-muted: rgba(246, 247, 251, 0.68);
           --card-divider: rgba(255, 255, 255, 0.14);
           --card-green: ${this._config.accent_color};
-          --card-red: #ea4738;
+          --card-red: #ea6c62;
         }
 
         ha-card {
@@ -2009,6 +2007,8 @@ class FuelinoCard extends HTMLElement {
         .garage-hero__stats,
         .compact-shell {
           background: var(--card-olive-panel);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          backdrop-filter: blur(10px);
           border-radius: ${Math.max(radius - 4, 18)}px;
           min-width: 0;
           box-sizing: border-box;
@@ -2384,15 +2384,15 @@ class FuelinoCard extends HTMLElement {
         }
 
         .fuelio-shell {
-          --fuelio-bg: #10172a;
-          --fuelio-bg-mid: #17223d;
-          --fuelio-bg-deep: #0f1220;
-          --fuelio-panel: rgba(255, 255, 255, 0.06);
+          --fuelio-bg: var(--card-olive);
+          --fuelio-bg-mid: var(--card-olive-mid);
+          --fuelio-bg-deep: var(--card-olive-deep);
+          --fuelio-panel: var(--card-olive-panel);
           --fuelio-panel-strong: rgba(255, 255, 255, 0.09);
-          --fuelio-text: #f6f7fb;
-          --fuelio-muted: rgba(246, 247, 251, 0.68);
+          --fuelio-text: var(--card-text);
+          --fuelio-muted: var(--card-muted);
           --fuelio-line: color-mix(in srgb, var(--accent) 78%, white);
-          --fuelio-down: #ea6c62;
+          --fuelio-down: var(--card-red);
           background:
             radial-gradient(circle at top right, color-mix(in srgb, var(--accent) 50%, transparent), transparent 38%),
             linear-gradient(145deg, var(--fuelio-bg) 0%, var(--fuelio-bg-mid) 45%, var(--fuelio-bg-deep) 100%);

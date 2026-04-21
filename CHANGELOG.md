@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.3.12
+
+Follow-up release for `FuelinoHA Card`.
+
+### Highlights
+
+- removed the `garage` layout from the public card configuration and editor
+- switched the default layout to `fuelio`
+- unified the `costs`, `fuelio`, and `compact` layouts around the same blue Garage-inspired color system
+- updated examples and documentation to use the remaining layout set
+
 ## v0.3.11
 
 Follow-up release for `FuelinoHA Card`.

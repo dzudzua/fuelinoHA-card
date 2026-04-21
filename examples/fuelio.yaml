@@ -1,7 +1,8 @@
 type: custom:fuelino-card
 vehicle: hyundai_i30
 title: Hyundai i30
-layout: garage
-accent_color: "#7c5cff"
+layout: fuelio
+trend_period: 180d
+accent_color: "#19b7ff"
 show_expenses: true
 show_trips: true
