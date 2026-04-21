@@ -1,8 +1,8 @@
 # Changelog
 
-## v0.1.0
+## v0.3.1
 
-Initial public release of `FuelinoHA Card`.
+Follow-up release for `FuelinoHA Card`.
 
 ### Highlights
 
