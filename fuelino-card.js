@@ -756,6 +756,10 @@ class FuelinoCard extends HTMLElement {
     return this._monthlySummary()[index] || null;
   }
 
+  _recentMonthSummaries(count = 4) {
+    return this._monthlySummary().slice(0, Math.max(0, count));
+  }
+
   _monthLabel(summary) {
     if (!summary?.year || !summary?.month) {
       return "Nezname obdobi";
@@ -1638,8 +1642,7 @@ class FuelinoCard extends HTMLElement {
   }
 
   _renderFuelioStats() {
-    const currentMonth = this._monthSummaryAt(0);
-    const previousMonth = this._monthSummaryAt(1);
+    const recentMonths = this._recentMonthSummaries(4);
     const recentFill = this._recentFills()[0] || null;
     const activities = this._recentActivityItems();
     const tripCount = this._formatState("trip_count");
@@ -1789,39 +1792,45 @@ class FuelinoCard extends HTMLElement {
           <section class="fuelio-section">
             <div class="fuelio-chip"><ha-icon icon="mdi:currency-usd"></ha-icon><span>Naklady</span></div>
             <div class="fuelio-panel fuelio-panel--stats">
-              <div class="fuelio-costblock">
-                <div class="fuelio-costblock__title">${currentMonth ? this._monthLabel(currentMonth) : "Tento mesic"}</div>
-                <div class="fuelio-statrow">
-                  <div class="fuelio-statrow__left">
-                    <ha-icon icon="mdi:gas-station"></ha-icon>
-                    <strong>${this._formatState("fuel_cost_this_month")}</strong>
-                  </div>
-                  <div class="fuelio-statrow__label">Palivo</div>
-                </div>
-                <div class="fuelio-statrow">
-                  <div class="fuelio-statrow__left">
-                    <ha-icon icon="mdi:cash"></ha-icon>
-                    <strong>${this._formatState("expense_cost_this_month")}</strong>
-                  </div>
-                  <div class="fuelio-statrow__label">Ostatni naklady</div>
-                </div>
-              </div>
-              <div class="fuelio-costblock fuelio-costblock--previous">
-                <div class="fuelio-costblock__title">${previousMonth ? this._monthLabel(previousMonth) : "Predchozi mesic"}</div>
-                <div class="fuelio-statrow">
-                  <div class="fuelio-statrow__left">
-                    <ha-icon icon="mdi:gas-station"></ha-icon>
-                    <strong>${this._formatState("last_month_cost")}</strong>
-                  </div>
-                  <div class="fuelio-statrow__label">Palivo</div>
-                </div>
-                <div class="fuelio-statrow">
-                  <div class="fuelio-statrow__left">
-                    <ha-icon icon="mdi:counter"></ha-icon>
-                    <strong>${this._formatState("last_month_fill_count")}</strong>
-                  </div>
-                  <div class="fuelio-statrow__label">Tankovani</div>
-                </div>
+              <div class="fuelio-costgrid">
+                ${recentMonths
+                  .map((month) => {
+                    const fuelCost = this._formatCurrencyValue(month?.total_cost, this._unit("fuel_cost_this_month") || "CZK");
+                    const fillCount = Number.isFinite(Number(month?.fill_count))
+                      ? this._formatNumber(Number(month.fill_count), { maximumFractionDigits: 0 })
+                      : "—";
+                    const distance = this._formatNumericValue(month?.distance, this._unit("distance_this_month") || "km", {
+                      maximumFractionDigits: 0,
+                    });
+
+                    return `
+                      <div class="fuelio-costblock">
+                        <div class="fuelio-costblock__title">${this._monthLabel(month)}</div>
+                        <div class="fuelio-statrow">
+                          <div class="fuelio-statrow__left">
+                            <ha-icon icon="mdi:gas-station"></ha-icon>
+                            <strong>${fuelCost}</strong>
+                          </div>
+                          <div class="fuelio-statrow__label">Palivo</div>
+                        </div>
+                        <div class="fuelio-statrow">
+                          <div class="fuelio-statrow__left">
+                            <ha-icon icon="mdi:counter"></ha-icon>
+                            <strong>${fillCount}</strong>
+                          </div>
+                          <div class="fuelio-statrow__label">Tankovani</div>
+                        </div>
+                        <div class="fuelio-statrow">
+                          <div class="fuelio-statrow__left">
+                            <ha-icon icon="mdi:map-marker-distance"></ha-icon>
+                            <strong>${distance}</strong>
+                          </div>
+                          <div class="fuelio-statrow__label">Vzdalenost</div>
+                        </div>
+                      </div>
+                    `;
+                  })
+                  .join("")}
               </div>
             </div>
           </section>
@@ -2699,7 +2708,20 @@ class FuelinoCard extends HTMLElement {
           gap: 14px;
         }
 
-        .fuelio-costblock + .fuelio-costblock {
+        .fuelio-costgrid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 16px;
+        }
+
+        .fuelio-costgrid .fuelio-costblock {
+          padding: 18px;
+          border-radius: 22px;
+          background: var(--fuelio-panel-strong);
+          border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .fuelio-panel > .fuelio-costblock + .fuelio-costblock {
           margin-top: 22px;
           padding-top: 18px;
           border-top: 1px solid rgba(255, 255, 255, 0.08);
@@ -3180,6 +3202,11 @@ class FuelinoCard extends HTMLElement {
         :host([data-width-mode="md"]) .fuelio-trend,
         :host([data-width-mode="sm"]) .fuelio-trend,
         :host([data-width-mode="xs"]) .fuelio-trend {
+          grid-template-columns: 1fr;
+        }
+
+        :host([data-width-mode="sm"]) .fuelio-costgrid,
+        :host([data-width-mode="xs"]) .fuelio-costgrid {
           grid-template-columns: 1fr;
         }
 

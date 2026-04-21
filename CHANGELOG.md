@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.3.17
+
+Follow-up release for `FuelinoHA Card`.
+
+### Highlights
+
+- expanded the `Naklady` section in the `fuelio` layout from 2 months to the latest 4 months
+- switched the monthly cost area to a compact responsive grid for easier month-to-month comparison
+- each month card now shows fuel cost, fill count, and driven distance from `monthly_summary`
+
 ## v0.3.16
 
 Follow-up release for `FuelinoHA Card`.
