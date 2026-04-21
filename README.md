@@ -65,14 +65,14 @@ type: module
 type: custom:fuelino-card
 vehicle: hyundai_i30
 title: Hyundai i30
-layout: costs
+layout: garage
 ```
 
 Supported options:
 
 - `vehicle`: vehicle slug used in entity ids, for example `hyundai_i30`
 - `title`: optional title override
-- `layout`: `costs`, `fuelio`, `garage`, or `compact`
+- `layout`: `garage`, `costs`, `fuelio`, or `compact`
 - `accent_color`: optional CSS color for the main accent
 - `show_expenses`: `true` / `false`
 - `show_trips`: `true` / `false`
