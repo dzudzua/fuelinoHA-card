@@ -2261,6 +2261,140 @@ class FuelinoCard extends HTMLElement {
           grid-template-columns: 1fr 1fr;
         }
 
+        :host([data-width-mode="md"]) .summary-grid,
+        :host([data-width-mode="sm"]) .summary-grid,
+        :host([data-width-mode="xs"]) .summary-grid,
+        :host([data-width-mode="md"]) .cost-grid,
+        :host([data-width-mode="sm"]) .cost-grid,
+        :host([data-width-mode="xs"]) .cost-grid {
+          grid-template-columns: 1fr;
+        }
+
+        :host([data-width-mode="md"]) .hero-panel,
+        :host([data-width-mode="sm"]) .hero-panel,
+        :host([data-width-mode="xs"]) .hero-panel {
+          padding: 18px;
+        }
+
+        :host([data-width-mode="md"]) .hero-stat-card__main,
+        :host([data-width-mode="md"]) .summary-card__main,
+        :host([data-width-mode="md"]) .cost-card__total {
+          font-size: clamp(1.8rem, 6vw, 2.6rem);
+        }
+
+        :host([data-width-mode="sm"]) .hero-stat-card__main,
+        :host([data-width-mode="sm"]) .summary-card__main,
+        :host([data-width-mode="sm"]) .cost-card__total {
+          font-size: clamp(1.7rem, 7vw, 2.35rem);
+        }
+
+        :host([data-width-mode="md"]) .hero-illustration,
+        :host([data-width-mode="sm"]) .hero-illustration,
+        :host([data-width-mode="xs"]) .hero-illustration {
+          min-height: 150px;
+        }
+
+        :host([data-width-mode="md"]) .hero-arc,
+        :host([data-width-mode="sm"]) .hero-arc,
+        :host([data-width-mode="xs"]) .hero-arc {
+          inset: 18px auto auto 20px;
+          width: 128px;
+          height: 128px;
+        }
+
+        :host([data-width-mode="md"]) .hero-wallet,
+        :host([data-width-mode="sm"]) .hero-wallet,
+        :host([data-width-mode="xs"]) .hero-wallet {
+          left: 48px;
+          top: 56px;
+          width: 108px;
+          height: 74px;
+        }
+
+        :host([data-width-mode="md"]) .hero-wallet__band,
+        :host([data-width-mode="sm"]) .hero-wallet__band,
+        :host([data-width-mode="xs"]) .hero-wallet__band {
+          top: 22px;
+          height: 12px;
+        }
+
+        :host([data-width-mode="md"]) .hero-wallet__cash,
+        :host([data-width-mode="sm"]) .hero-wallet__cash,
+        :host([data-width-mode="xs"]) .hero-wallet__cash {
+          left: -10px;
+          top: 28px;
+          width: 64px;
+          height: 34px;
+        }
+
+        :host([data-width-mode="md"]) .hero-receipt,
+        :host([data-width-mode="sm"]) .hero-receipt,
+        :host([data-width-mode="xs"]) .hero-receipt {
+          right: 18px;
+          top: 42px;
+          width: 88px;
+          height: 108px;
+        }
+
+        :host([data-width-mode="md"]) .hero-receipt::before,
+        :host([data-width-mode="sm"]) .hero-receipt::before,
+        :host([data-width-mode="xs"]) .hero-receipt::before {
+          left: 14px;
+          top: 18px;
+          width: 58px;
+          height: 18px;
+        }
+
+        :host([data-width-mode="md"]) .hero-receipt span,
+        :host([data-width-mode="sm"]) .hero-receipt span,
+        :host([data-width-mode="xs"]) .hero-receipt span {
+          left: 14px;
+          right: 14px;
+          height: 6px;
+        }
+
+        :host([data-width-mode="md"]) .hero-receipt span:nth-child(1),
+        :host([data-width-mode="sm"]) .hero-receipt span:nth-child(1),
+        :host([data-width-mode="xs"]) .hero-receipt span:nth-child(1) {
+          top: 52px;
+        }
+
+        :host([data-width-mode="md"]) .hero-receipt span:nth-child(2),
+        :host([data-width-mode="sm"]) .hero-receipt span:nth-child(2),
+        :host([data-width-mode="xs"]) .hero-receipt span:nth-child(2) {
+          top: 68px;
+          width: 44px;
+        }
+
+        :host([data-width-mode="md"]) .hero-receipt span:nth-child(3),
+        :host([data-width-mode="sm"]) .hero-receipt span:nth-child(3),
+        :host([data-width-mode="xs"]) .hero-receipt span:nth-child(3) {
+          top: 84px;
+          width: 56px;
+        }
+
+        :host([data-width-mode="md"]) .hero-badge,
+        :host([data-width-mode="sm"]) .hero-badge,
+        :host([data-width-mode="xs"]) .hero-badge {
+          width: 42px;
+          height: 42px;
+          border-radius: 14px;
+        }
+
+        :host([data-width-mode="md"]) .hero-badge--left,
+        :host([data-width-mode="sm"]) .hero-badge--left,
+        :host([data-width-mode="xs"]) .hero-badge--left {
+          left: 16px;
+          top: 52px;
+        }
+
+        :host([data-width-mode="md"]) .hero-badge--right,
+        :host([data-width-mode="sm"]) .hero-badge--right,
+        :host([data-width-mode="xs"]) .hero-badge--right {
+          left: 134px;
+          top: 98px;
+        }
+
         :host([data-width-mode="xs"]) .hero-stats,
         :host([data-width-mode="xs"]) .summary-card__stats,
         :host([data-width-mode="xs"]) .cost-card__stats,
