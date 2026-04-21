@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.3.3
+## v0.3.4
 
 Follow-up release for `FuelinoHA Card`.
 
@@ -11,6 +11,8 @@ Follow-up release for `FuelinoHA Card`.
 - added `costs`, `garage`, and `compact` layouts
 - improved responsiveness for narrow dashboard columns so the card behaves better in dense multi-column views
 - inlined the card editor into `fuelino-card.js` so the visual editor works reliably when installed through HACS
+- stopped throwing a hard config error when Home Assistant briefly initializes the card without a `vehicle` value
+- replaced that crash state with a friendly placeholder message inside the card
 - switched README badges to stable tag and repository endpoints that render correctly on GitHub and in HACS
 - updated manual installation docs to match the single-file card setup
 

@@ -387,12 +387,9 @@ class FuelinoCard extends HTMLElement {
   }
 
   setConfig(config) {
-    if (!config.vehicle) {
-      throw new Error("FuelinoHA Card requires a vehicle slug, for example 'hyundai_i30'.");
-    }
-
     this._config = {
       title: null,
+      vehicle: "",
       layout: "costs",
       accent_color: "#88d24f",
       card_background: "",
@@ -403,6 +400,7 @@ class FuelinoCard extends HTMLElement {
       show_header: true,
       dense_mode: false,
       ...config,
+      vehicle: String(config?.vehicle ?? "").trim(),
     };
 
     if (!this.shadowRoot) {
@@ -427,6 +425,10 @@ class FuelinoCard extends HTMLElement {
 
   getCardSize() {
     return this._config?.layout === "compact" ? 4 : 8;
+  }
+
+  _hasVehicle() {
+    return Boolean(this._config?.vehicle);
   }
 
   _ensureResizeObserver() {
@@ -959,6 +961,56 @@ class FuelinoCard extends HTMLElement {
 
   _render() {
     if (!this._hass || !this._config) {
+      return;
+    }
+
+    if (!this._hasVehicle()) {
+      this.shadowRoot.innerHTML = `
+        <style>
+          :host {
+            display: block;
+          }
+
+          ha-card {
+            overflow: hidden;
+            border-radius: 24px;
+            box-shadow: none;
+          }
+
+          .empty-shell {
+            padding: 20px;
+            border-radius: 24px;
+            background: linear-gradient(180deg, #3a3413 0%, #262004 100%);
+            color: #f4f5ef;
+            display: grid;
+            gap: 10px;
+          }
+
+          .empty-shell__title {
+            font-size: 1rem;
+            font-weight: 700;
+          }
+
+          .empty-shell__body {
+            color: rgba(244, 245, 239, 0.78);
+            line-height: 1.5;
+          }
+
+          code {
+            padding: 2px 6px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.08);
+          }
+        </style>
+        <ha-card>
+          <div class="empty-shell">
+            <div class="empty-shell__title">FuelinoHA Card</div>
+            <div class="empty-shell__body">
+              Set <code>vehicle</code> to your Fuelino vehicle slug, for example <code>hyundai_i30</code>.
+            </div>
+          </div>
+        </ha-card>
+      `;
       return;
     }
 
