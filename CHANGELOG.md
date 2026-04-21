@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.3.1
+## v0.3.2
 
 Follow-up release for `FuelinoHA Card`.
 
@@ -10,6 +10,7 @@ Follow-up release for `FuelinoHA Card`.
 - added the visual editor for Home Assistant card configuration
 - added `costs`, `garage`, and `compact` layouts
 - improved responsiveness for narrow dashboard columns so the card behaves better in dense multi-column views
+- inlined the card editor into `fuelino-card.js` so the visual editor works reliably when installed through HACS
 - added README badges and project support button
 
 ### Notes
