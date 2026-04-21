@@ -11,7 +11,8 @@ MVP scaffold.
 Current features:
 
 - custom card without build step
-- two layouts:
+- three layouts:
+  - `costs`
   - `garage`
   - `compact`
 - reads Fuelino sensor entities from one vehicle slug, for example `hyundai_i30`
@@ -52,17 +53,18 @@ type: module
 type: custom:fuelino-card
 vehicle: hyundai_i30
 title: Hyundai i30
-layout: garage
+layout: costs
 ```
 
 Supported options:
 
 - `vehicle`: vehicle slug used in entity ids, for example `hyundai_i30`
 - `title`: optional title override
-- `layout`: `garage` or `compact`
+- `layout`: `costs`, `garage`, or `compact`
 - `accent_color`: optional CSS color for the main accent
 - `show_expenses`: `true` / `false`
 - `show_trips`: `true` / `false`
+- `show_empty_categories`: show expense category cards even when total is `0`
 
 ## Example entity mapping
 
@@ -81,6 +83,7 @@ If `vehicle: hyundai_i30`, the card will read entities like:
 
 See:
 
+- `examples/costs.yaml`
 - `examples/garage.yaml`
 - `examples/compact.yaml`
 
@@ -88,3 +91,4 @@ See:
 
 - this project is scaffolded inside the current workspace, but intended to become its own GitHub repository
 - it is designed specifically around the sensor model exposed by `FuelinoHA`
+- the new `costs` layout is inspired by the mobile Fuelio/Fuelino statistics screens and is intended as the primary layout

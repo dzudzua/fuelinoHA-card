@@ -1,0 +1,7 @@
+type: custom:fuelino-card
+vehicle: hyundai_i30
+title: hjundaj
+layout: costs
+show_expenses: true
+show_trips: true
+show_empty_categories: false
