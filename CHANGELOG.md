@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.3.2
+## v0.3.3
 
 Follow-up release for `FuelinoHA Card`.
 
@@ -11,7 +11,8 @@ Follow-up release for `FuelinoHA Card`.
 - added `costs`, `garage`, and `compact` layouts
 - improved responsiveness for narrow dashboard columns so the card behaves better in dense multi-column views
 - inlined the card editor into `fuelino-card.js` so the visual editor works reliably when installed through HACS
-- added README badges and project support button
+- switched README badges to stable tag and repository endpoints that render correctly on GitHub and in HACS
+- updated manual installation docs to match the single-file card setup
 
 ### Notes
 
