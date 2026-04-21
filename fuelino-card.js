@@ -367,6 +367,8 @@ class FuelinoCard extends HTMLElement {
   constructor() {
     super();
     this._resizeObserver = null;
+    this._fuelioTrendSlide = 0;
+    this._trendTouchStartX = null;
   }
 
   static async getConfigElement() {
@@ -665,6 +667,125 @@ class FuelinoCard extends HTMLElement {
     return `${sign}${this._formatNumber(numeric, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`;
   }
 
+  _formatTrendDeltaValue(current, previous) {
+    const a = Number(current);
+    const b = Number(previous);
+    if (!Number.isFinite(a) || !Number.isFinite(b) || b === 0) {
+      return null;
+    }
+    return ((a - b) / b) * 100;
+  }
+
+  _barHeights(values, maxHeight = 160) {
+    if (!Array.isArray(values) || values.length === 0) {
+      return [];
+    }
+    const max = Math.max(...values, 1);
+    return values.map((value) => Math.max(12, (value / max) * maxHeight));
+  }
+
+  _average(values) {
+    if (!Array.isArray(values) || values.length === 0) {
+      return null;
+    }
+    const total = values.reduce((sum, value) => sum + value, 0);
+    return total / values.length;
+  }
+
+  _setFuelioTrendSlide(index, total = null) {
+    const count = total ?? this._buildFuelioTrendCards().length;
+    if (!count) {
+      this._fuelioTrendSlide = 0;
+      return;
+    }
+
+    const next = ((index % count) + count) % count;
+    if (this._fuelioTrendSlide !== next) {
+      this._fuelioTrendSlide = next;
+      if (this._hass && this.shadowRoot) {
+        this._render();
+      }
+    }
+  }
+
+  _buildFuelioTrendCards() {
+    const cards = [];
+    const fillsChronological = this._recentFills().slice().reverse();
+
+    const priceFills = fillsChronological.filter((item) => Number.isFinite(Number(item.price_per_unit)));
+    if (priceFills.length >= 2) {
+      const values = priceFills.map((item) => Number(item.price_per_unit));
+      cards.push({
+        kind: "line",
+        icon: "mdi:gas-station",
+        title: `Cena paliva${priceFills[priceFills.length - 1]?.fuel_type ? ` (${priceFills[priceFills.length - 1].fuel_type})` : ""}`,
+        latest: values[values.length - 1],
+        average: this._average(values),
+        delta: this._formatTrendDeltaValue(values[values.length - 1], values[values.length - 2]),
+        values,
+        unit: this._unit("last_price_per_unit"),
+        xStart: this._formatDate(priceFills[0]?.date, { day: "2-digit", month: "short" }),
+        xEnd: this._formatDate(priceFills[priceFills.length - 1]?.date, { day: "2-digit", month: "short" }),
+      });
+    }
+
+    const consumptionFills = fillsChronological.filter((item) => Number.isFinite(Number(item.consumption)));
+    if (consumptionFills.length >= 2) {
+      const values = consumptionFills.map((item) => Number(item.consumption));
+      cards.push({
+        kind: "line",
+        icon: "mdi:water-outline",
+        title: "Spotreba paliva",
+        latest: values[values.length - 1],
+        average: this._average(values),
+        delta: this._formatTrendDeltaValue(values[values.length - 1], values[values.length - 2]),
+        values,
+        unit: this._unit("last_consumption"),
+        xStart: this._formatDate(consumptionFills[0]?.date, { day: "2-digit", month: "short" }),
+        xEnd: this._formatDate(consumptionFills[consumptionFills.length - 1]?.date, { day: "2-digit", month: "short" }),
+      });
+    }
+
+    const monthly = this._monthlySummary().slice().reverse();
+    if (monthly.length >= 2) {
+      const fuelCosts = monthly.filter((item) => Number.isFinite(Number(item.total_cost)));
+      if (fuelCosts.length >= 2) {
+        const values = fuelCosts.map((item) => Number(item.total_cost));
+        cards.push({
+          kind: "bar",
+          icon: "mdi:cash",
+          title: "Mesicni naklady (palivo)",
+          latest: values[values.length - 1],
+          average: this._average(values),
+          delta: this._formatTrendDeltaValue(values[values.length - 1], values[values.length - 2]),
+          values,
+          unit: this._unit("fuel_cost_this_month") || "CZK",
+          xStart: this._formatDate(`${fuelCosts[0].year}-${String(fuelCosts[0].month).padStart(2, "0")}-01`, { month: "short", year: "2-digit" }),
+          xEnd: this._formatDate(`${fuelCosts[fuelCosts.length - 1].year}-${String(fuelCosts[fuelCosts.length - 1].month).padStart(2, "0")}-01`, { month: "short", year: "2-digit" }),
+        });
+      }
+
+      const distances = monthly.filter((item) => Number.isFinite(Number(item.distance)));
+      if (distances.length >= 2) {
+        const values = distances.map((item) => Number(item.distance));
+        cards.push({
+          kind: "bar",
+          icon: "mdi:map-marker-distance",
+          title: "Mesicni vzdalenost",
+          latest: values[values.length - 1],
+          average: this._average(values),
+          delta: this._formatTrendDeltaValue(values[values.length - 1], values[values.length - 2]),
+          values,
+          unit: this._unit("distance_this_month"),
+          xStart: this._formatDate(`${distances[0].year}-${String(distances[0].month).padStart(2, "0")}-01`, { month: "short", year: "2-digit" }),
+          xEnd: this._formatDate(`${distances[distances.length - 1].year}-${String(distances[distances.length - 1].month).padStart(2, "0")}-01`, { month: "short", year: "2-digit" }),
+        });
+      }
+    }
+
+    return cards;
+  }
+
   _recentFuelPriceDeltaPercent() {
     const fills = this._recentFills().filter((item) => Number.isFinite(Number(item.price_per_unit)));
     if (fills.length < 2) {
@@ -704,78 +825,115 @@ class FuelinoCard extends HTMLElement {
   }
 
   _fuelioTrendCard() {
-    const fills = this._recentFills()
-      .filter((item) => Number.isFinite(Number(item.price_per_unit)))
-      .slice()
-      .reverse();
-    if (fills.length === 0) {
+    const cards = this._buildFuelioTrendCards();
+    if (cards.length === 0) {
       return "";
     }
+    const total = cards.length;
+    const activeIndex = Math.min(this._fuelioTrendSlide, total - 1);
+    const card = cards[activeIndex];
+    const pager = `
+      <div class="fuelio-trend__dots">
+        ${Array.from({ length: total }, (_, index) => `
+          <button type="button" class="fuelio-trend__pager ${index === activeIndex ? "is-active" : ""}" data-trend-slide="${index}" aria-label="Show trend ${index + 1}"></button>
+        `).join("")}
+      </div>
+    `;
 
-    const values = fills.map((item) => Number(item.price_per_unit));
-    const latest = values[values.length - 1];
-    const average = values.reduce((sum, value) => sum + value, 0) / values.length;
-    const delta = this._recentFuelPriceDeltaPercent();
-    const points = this._trendPoints(values);
-    const latestFill = this._recentFills()[0] || null;
-    const labels = fills;
-    const firstLabel = labels[0]?.date ? this._formatDate(labels[0].date, { day: "2-digit", month: "short" }) : "";
-    const lastLabel = labels[labels.length - 1]?.date
-      ? this._formatDate(labels[labels.length - 1].date, { day: "2-digit", month: "short" })
-      : "";
-    const max = Math.max(...values);
-    const min = Math.min(...values);
-    const avgY = 170 - (((average - min) / ((max - min) || 1)) * 170);
+    if (card.kind === "bar") {
+      const heights = this._barHeights(card.values);
+      return `
+        <section class="fuelio-panel fuelio-panel--trend">
+          <div class="fuelio-trend-carousel" data-trend-carousel>
+            <div class="fuelio-trend">
+              <div class="fuelio-trend__meta">
+                <div class="fuelio-trend__eyebrow"><ha-icon icon="${card.icon}"></ha-icon> ${card.title}</div>
+                <div class="fuelio-trend__metric">
+                  <span class="fuelio-trend__value">${this._formatCurrencyValue(card.latest, card.unit, this._formatNumber(card.latest))}</span>
+                  <span class="fuelio-trend__label">Posledni</span>
+                </div>
+                <div class="fuelio-trend__metric">
+                  <span class="fuelio-trend__value">${this._formatCurrencyValue(card.average, card.unit, this._formatNumber(card.average))}</span>
+                  <span class="fuelio-trend__label">Prum.</span>
+                </div>
+                <div class="fuelio-trend__metric">
+                  <span class="fuelio-trend__value ${card.delta > 0 ? "is-up" : card.delta < 0 ? "is-down" : ""}">${this._formatTrendDelta(card.delta)}</span>
+                  <span class="fuelio-trend__label">Zmenit</span>
+                </div>
+              </div>
+              <div class="fuelio-trend__chart">
+                <div class="fuelio-bars">
+                  ${heights
+                    .map(
+                      (height, index) => `
+                    <div class="fuelio-bars__col">
+                      <div class="fuelio-bars__bar ${index === heights.length - 1 ? "is-active" : ""}" style="height:${height.toFixed(1)}px"></div>
+                    </div>
+                  `
+                    )
+                    .join("")}
+                </div>
+                <div class="fuelio-trend__axis">
+                  <span>${card.xStart}</span>
+                  <span>${card.xEnd}</span>
+                </div>
+                ${pager}
+              </div>
+            </div>
+          </div>
+        </section>
+      `;
+    }
+
+    const points = this._trendPoints(card.values);
+    const max = Math.max(...card.values);
+    const min = Math.min(...card.values);
+    const avgY = 170 - ((((card.average ?? min) - min) / ((max - min) || 1)) * 170);
 
     return `
       <section class="fuelio-panel fuelio-panel--trend">
-        <div class="fuelio-panel__header">
-          <div class="fuelio-chip"><ha-icon icon="mdi:chart-line"></ha-icon><span>Trendy</span></div>
-        </div>
-        <div class="fuelio-trend">
-          <div class="fuelio-trend__meta">
-            <div class="fuelio-trend__eyebrow">Cena paliva</div>
-            <div class="fuelio-trend__metric">
-              <span class="fuelio-trend__value">${this._formatCurrencyValue(latest, this._unit("last_price_per_unit"))}</span>
-              <span class="fuelio-trend__label">Posledni cena</span>
+        <div class="fuelio-trend-carousel" data-trend-carousel>
+          <div class="fuelio-trend">
+            <div class="fuelio-trend__meta">
+              <div class="fuelio-trend__eyebrow"><ha-icon icon="${card.icon}"></ha-icon> ${card.title}</div>
+              <div class="fuelio-trend__metric">
+                <span class="fuelio-trend__value">${this._formatCurrencyValue(card.latest, card.unit, this._formatNumber(card.latest))}</span>
+                <span class="fuelio-trend__label">Posledni</span>
+              </div>
+              <div class="fuelio-trend__metric">
+                <span class="fuelio-trend__value">${this._formatCurrencyValue(card.average, card.unit, this._formatNumber(card.average))}</span>
+                <span class="fuelio-trend__label">Prum.</span>
+              </div>
+              <div class="fuelio-trend__metric">
+                <span class="fuelio-trend__value ${card.delta > 0 ? "is-up" : card.delta < 0 ? "is-down" : ""}">${this._formatTrendDelta(card.delta)}</span>
+                <span class="fuelio-trend__label">Zmenit</span>
+              </div>
             </div>
-            <div class="fuelio-trend__metric">
-              <span class="fuelio-trend__value">${this._formatCurrencyValue(average, this._unit("average_price"))}</span>
-              <span class="fuelio-trend__label">Prumer</span>
-            </div>
-            <div class="fuelio-trend__metric">
-              <span class="fuelio-trend__value ${delta > 0 ? "is-up" : delta < 0 ? "is-down" : ""}">${this._formatTrendDelta(delta)}</span>
-              <span class="fuelio-trend__label">Zmena oproti minule</span>
-            </div>
-            ${
-              latestFill
-                ? `<div class="fuelio-trend__hint">${this._formatDate(latestFill.date)} ${this._daysAgoLabel(latestFill.date)}</div>`
-                : ""
-            }
-          </div>
-          <div class="fuelio-trend__chart">
-            <svg viewBox="0 0 420 210" role="img" aria-label="Fuel price trend">
-              <defs>
-                <linearGradient id="fuelioTrendFill" x1="0" x2="0" y1="0" y2="1">
-                  <stop offset="0%" stop-color="rgba(235,214,112,0.42)"></stop>
-                  <stop offset="100%" stop-color="rgba(235,214,112,0.02)"></stop>
-                </linearGradient>
-              </defs>
-              <line x1="0" y1="${avgY.toFixed(1)}" x2="420" y2="${avgY.toFixed(1)}" class="fuelio-trend__avg"></line>
-              <polyline points="${points} 420,170 0,170" class="fuelio-trend__area"></polyline>
-              <polyline points="${points}" class="fuelio-trend__line"></polyline>
-              ${points
-                .split(" ")
-                .map((point, index, all) => {
-                  const [x, y] = point.split(",");
-                  const active = index === all.length - 1 ? "is-active" : "";
-                  return `<circle cx="${x}" cy="${y}" r="${index === all.length - 1 ? 7 : 4.5}" class="fuelio-trend__dot ${active}"></circle>`;
-                })
-                .join("")}
-            </svg>
-            <div class="fuelio-trend__axis">
-              <span>${firstLabel}</span>
-              <span>${lastLabel}</span>
+            <div class="fuelio-trend__chart">
+              <svg viewBox="0 0 420 210" role="img" aria-label="${card.title}">
+                <defs>
+                  <linearGradient id="fuelioTrendFill-${activeIndex}" x1="0" x2="0" y1="0" y2="1">
+                    <stop offset="0%" stop-color="rgba(235,214,112,0.42)"></stop>
+                    <stop offset="100%" stop-color="rgba(235,214,112,0.02)"></stop>
+                  </linearGradient>
+                </defs>
+                <line x1="0" y1="${avgY.toFixed(1)}" x2="420" y2="${avgY.toFixed(1)}" class="fuelio-trend__avg"></line>
+                <polyline points="${points} 420,170 0,170" class="fuelio-trend__area" style="fill:url(#fuelioTrendFill-${activeIndex})"></polyline>
+                <polyline points="${points}" class="fuelio-trend__line"></polyline>
+                ${points
+                  .split(" ")
+                  .map((point, index, all) => {
+                    const [x, y] = point.split(",");
+                    const active = index === all.length - 1 ? "is-active" : "";
+                    return `<circle cx="${x}" cy="${y}" r="${index === all.length - 1 ? 7 : 4.5}" class="fuelio-trend__dot ${active}"></circle>`;
+                  })
+                  .join("")}
+              </svg>
+              <div class="fuelio-trend__axis">
+                <span>${card.xStart}</span>
+                <span>${card.xEnd}</span>
+              </div>
+              ${pager}
             </div>
           </div>
         </div>
@@ -1356,6 +1514,50 @@ class FuelinoCard extends HTMLElement {
         </div>
       </ha-card>
     `;
+  }
+
+  _attachFuelioTrendEvents() {
+    const carousel = this.shadowRoot?.querySelector("[data-trend-carousel]");
+    if (!carousel) {
+      return;
+    }
+
+    this.shadowRoot.querySelectorAll("[data-trend-slide]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const index = Number(button.getAttribute("data-trend-slide"));
+        if (Number.isFinite(index)) {
+          this._setFuelioTrendSlide(index);
+        }
+      });
+    });
+
+    carousel.addEventListener("touchstart", (event) => {
+      this._trendTouchStartX = event.touches[0]?.clientX ?? null;
+    }, { passive: true });
+
+    carousel.addEventListener("touchend", (event) => {
+      if (this._trendTouchStartX === null) {
+        return;
+      }
+      const endX = event.changedTouches[0]?.clientX ?? this._trendTouchStartX;
+      const deltaX = endX - this._trendTouchStartX;
+      this._trendTouchStartX = null;
+
+      if (Math.abs(deltaX) < 35) {
+        return;
+      }
+
+      const total = this._buildFuelioTrendCards().length;
+      if (!total) {
+        return;
+      }
+
+      if (deltaX < 0) {
+        this._setFuelioTrendSlide(this._fuelioTrendSlide + 1, total);
+      } else {
+        this._setFuelioTrendSlide(this._fuelioTrendSlide - 1, total);
+      }
+    }, { passive: true });
   }
 
   _render() {
@@ -2167,6 +2369,64 @@ class FuelinoCard extends HTMLElement {
           font-size: 0.9rem;
         }
 
+        .fuelio-trend__dots {
+          display: flex;
+          justify-content: center;
+          gap: 10px;
+          margin-top: 14px;
+        }
+
+        .fuelio-trend__pager {
+          width: 13px;
+          height: 13px;
+          border-radius: 50%;
+          border: 0;
+          padding: 0;
+          background: rgba(0, 0, 0, 0.28);
+          cursor: pointer;
+        }
+
+        .fuelio-trend__pager.is-active {
+          background: var(--fuelio-line);
+        }
+
+        .fuelio-bars {
+          height: 180px;
+          display: grid;
+          grid-template-columns: repeat(6, minmax(0, 1fr));
+          gap: 14px;
+          align-items: end;
+          padding: 0 8px;
+          position: relative;
+        }
+
+        .fuelio-bars::before {
+          content: "";
+          position: absolute;
+          left: 8px;
+          right: 8px;
+          top: 50%;
+          border-top: 2px dashed rgba(255, 255, 255, 0.28);
+        }
+
+        .fuelio-bars__col {
+          height: 100%;
+          display: flex;
+          align-items: end;
+        }
+
+        .fuelio-bars__bar {
+          width: 100%;
+          border-radius: 10px;
+          background: color-mix(in srgb, var(--fuelio-line) 84%, white);
+          box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+        }
+
+        .fuelio-bars__bar.is-active {
+          outline: 2px dashed rgba(255, 255, 255, 0.38);
+          outline-offset: 4px;
+        }
+
         .fuelio-tripgrid {
           display: grid;
           grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2554,6 +2814,8 @@ class FuelinoCard extends HTMLElement {
       </style>
       ${cardHtml}
     `;
+
+    this._attachFuelioTrendEvents();
   }
 }
 
