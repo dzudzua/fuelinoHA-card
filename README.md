@@ -29,7 +29,7 @@ Current features:
   - `compact`
 - interactive fuel trend carousel with swipe and click navigation
 - configurable graph period for the `fuelio` layout
-- reads Fuelino sensor entities from one FuelinoHA vehicle slug and can detect available cars by Home Assistant device name in the editor
+- reads Fuelino sensor entities for one detected FuelinoHA vehicle and can auto-detect available cars by Home Assistant device name in the editor
 - shows:
   - last fill
   - price per unit
@@ -66,7 +66,7 @@ type: module
 
 ```yaml
 type: custom:fuelino-card
-vehicle: vehicle_slug
+vehicle: My car
 title: My car
 layout: fuelio
 trend_period: 180d
@@ -74,7 +74,7 @@ trend_period: 180d
 
 Supported options:
 
-- `vehicle`: FuelinoHA vehicle slug used in entity ids, for example `vehicle_slug`
+- `vehicle`: detected Home Assistant vehicle name from the editor; legacy Fuelino slug values still work
 - `title`: optional title override
 - `layout`: `costs`, `fuelio`, or `compact`
 - `trend_period`: `30d`, `90d`, `180d`, `365d`, or `all`
@@ -89,7 +89,7 @@ Supported options:
 
 ## Example entity mapping
 
-If `vehicle: vehicle_slug`, the card will read entities like:
+If your selected vehicle maps to the Fuelino slug `vehicle_slug`, the card will read entities like:
 
 - `sensor.vehicle_slug_last_fill_date`
 - `sensor.vehicle_slug_last_fill_cost`

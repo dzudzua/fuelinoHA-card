@@ -78,20 +78,109 @@ class FuelinoCard extends HTMLElement {
     return Boolean(this._config?.vehicle);
   }
 
-  _availableVehicles() {
-    const states = Object.values(this._hass?.states || {});
-    const vehicles = new Set();
+  _vehicleEntityRegex() {
     const suffixPattern = "(total_vehicle_cost|total_cost|last_fill_date|fuel_cost_this_month|odometer)";
-    const regex = new RegExp(`^sensor\\.([a-z0-9_]+)_${suffixPattern}$`, "i");
+    return new RegExp(`^sensor\\.([a-z0-9_]+)_${suffixPattern}$`, "i");
+  }
 
-    for (const state of states) {
-      const match = String(state?.entity_id || "").match(regex);
-      if (match) {
-        vehicles.add(match[1]);
+  _slugToLabel(slug) {
+    return String(slug || "")
+      .split("_")
+      .filter(Boolean)
+      .map((part) => (part.length <= 3 ? part.toUpperCase() : part.charAt(0).toUpperCase() + part.slice(1)))
+      .join(" ");
+  }
+
+  _humanizeMetric(metric) {
+    return String(metric || "")
+      .split("_")
+      .filter(Boolean)
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(" ");
+  }
+
+  _fallbackVehicleLabelFromState(state, slug) {
+    const friendly = String(state?.attributes?.friendly_name || "").trim();
+    if (!friendly) {
+      return this._slugToLabel(slug);
+    }
+
+    const suffixes = [
+      "Total Vehicle Cost",
+      "Total Cost",
+      "Last Fill Date",
+      "Fuel Cost This Month",
+      "Odometer",
+      this._humanizeMetric(state?.entity_id?.split("_").slice(-3).join("_") || ""),
+    ].filter(Boolean);
+
+    for (const suffix of suffixes) {
+      if (friendly.endsWith(suffix)) {
+        const trimmed = friendly.slice(0, -suffix.length).trim();
+        if (trimmed) {
+          return trimmed;
+        }
       }
     }
 
-    return [...vehicles].sort();
+    return this._slugToLabel(slug);
+  }
+
+  _normalizedVehicleValue(value) {
+    return String(value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, " ");
+  }
+
+  _vehicleRecords() {
+    const states = Object.values(this._hass?.states || {});
+    const vehicles = new Map();
+    const regex = this._vehicleEntityRegex();
+
+    for (const state of states) {
+      const match = String(state?.entity_id || "").match(regex);
+      if (!match) {
+        continue;
+      }
+
+      const slug = match[1];
+      if (!vehicles.has(slug)) {
+        vehicles.set(slug, {
+          slug,
+          label: this._fallbackVehicleLabelFromState(state, slug),
+        });
+      }
+    }
+
+    return [...vehicles.values()].sort((a, b) => a.label.localeCompare(b.label));
+  }
+
+  _resolvedVehicleSlug() {
+    const selected = String(this._config?.vehicle || "").trim();
+    if (!selected) {
+      return "";
+    }
+
+    const vehicles = this._vehicleRecords();
+    const exactSlug = vehicles.find((vehicle) => vehicle.slug === selected);
+    if (exactSlug) {
+      return exactSlug.slug;
+    }
+
+    const normalizedSelected = this._normalizedVehicleValue(selected);
+    const match = vehicles.find((vehicle) => {
+      return (
+        this._normalizedVehicleValue(vehicle.label) === normalizedSelected ||
+        this._normalizedVehicleValue(this._slugToLabel(vehicle.slug)) === normalizedSelected
+      );
+    });
+
+    return match?.slug || selected;
+  }
+
+  _availableVehicles() {
+    return this._vehicleRecords().map((vehicle) => vehicle.label);
   }
 
   _hasVehicleData() {
@@ -133,7 +222,8 @@ class FuelinoCard extends HTMLElement {
   }
 
   _entityId(suffix) {
-    return `sensor.${this._config.vehicle}_${suffix}`;
+    const vehicle = this._resolvedVehicleSlug();
+    return vehicle ? `sensor.${vehicle}_${suffix}` : "";
   }
 
   _entity(suffix) {
@@ -1639,7 +1729,7 @@ class FuelinoCard extends HTMLElement {
           <div class="empty-shell">
             <div class="empty-shell__title">FuelinoHA Card</div>
             <div class="empty-shell__body">
-              Set <code>vehicle</code> to your Fuelino vehicle slug, for example <code>vehicle_slug</code>.
+              Select your Fuelino vehicle in the visual editor or set <code>vehicle</code> to your Home Assistant vehicle name.
             </div>
           </div>
         </ha-card>
@@ -1693,7 +1783,7 @@ class FuelinoCard extends HTMLElement {
               No FuelinoHA sensors were found for <code>${this._config.vehicle}</code>.
               ${
                 availableVehicles.length
-                  ? `Available vehicles: <code>${availableVehicles.join("</code>, <code>")}</code>.`
+                  ? `Detected vehicles: <code>${availableVehicles.join("</code>, <code>")}</code>.`
                   : "No vehicles were auto-detected yet."
               }
             </div>

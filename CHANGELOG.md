@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.3.23
+
+Follow-up release for `FuelinoHA Card`.
+
+### Highlights
+
+- removed the manual `Vehicle slug` input from the visual editor
+- switched card setup to use the detected Home Assistant vehicle name instead
+- added automatic mapping from the selected vehicle name to the internal Fuelino sensor slug
+- kept backward compatibility for existing card configs that still use the legacy slug value
+- updated the empty-state messaging and README to reflect the simpler setup flow
+
 ## v0.3.22
 
 Follow-up release for `FuelinoHA Card`.

@@ -313,10 +313,9 @@ class FuelinoCardEditor extends HTMLElement {
       <div class="stack">
         ${
           vehicleOptions.length
-            ? this._select("Detected vehicle", "vehicle", vehicleOptions)
-            : `<div class="hint">No FuelinoHA vehicles were auto-detected yet. You can still enter the vehicle slug manually below.</div>`
+            ? this._select("Vehicle", "vehicle", vehicleOptions)
+            : `<div class="hint">No FuelinoHA vehicles were auto-detected yet.</div>`
         }
-        ${this._input("Vehicle slug", "vehicle", "vehicle_slug")}
         ${this._input("Card title", "title", "My car")}
         ${this._select("Layout", "layout", [
           { value: "costs", label: "Costs" },
@@ -331,8 +330,7 @@ class FuelinoCardEditor extends HTMLElement {
           { value: "all", label: "All data" },
         ])}
         <div class="hint">
-          Pick a detected vehicle by its Home Assistant device name, or enter the raw vehicle slug manually if needed.
-          Example entity pattern: <code>sensor.vehicle_slug_total_vehicle_cost</code>
+          Pick the detected vehicle from Home Assistant. The card will use the matching Fuelino sensors automatically.
         </div>
       </div>
     `;
