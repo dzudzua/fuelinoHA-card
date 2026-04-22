@@ -113,6 +113,41 @@ class FuelinoCardEditor extends HTMLElement {
     return `<button class="tab ${this._activeTab === id ? "is-active" : ""}" data-tab="${id}">${label}</button>`;
   }
 
+  _slugToLabel(slug) {
+    return String(slug || "")
+      .split("_")
+      .filter(Boolean)
+      .map((part) => (part.length <= 3 ? part.toUpperCase() : part.charAt(0).toUpperCase() + part.slice(1)))
+      .join(" ");
+  }
+
+  _vehicleOptions() {
+    const states = Object.values(this._hass?.states || {});
+    const vehicles = new Map();
+    const suffixPattern = "(total_vehicle_cost|total_cost|last_fill_date|fuel_cost_this_month|odometer)";
+    const regex = new RegExp(`^sensor\\.([a-z0-9_]+)_${suffixPattern}$`, "i");
+
+    for (const state of states) {
+      const entityId = state?.entity_id || "";
+      const match = entityId.match(regex);
+      if (!match) {
+        continue;
+      }
+      const slug = match[1];
+      if (!vehicles.has(slug)) {
+        vehicles.set(slug, this._slugToLabel(slug));
+      }
+    }
+
+    if (this._config.vehicle && !vehicles.has(this._config.vehicle)) {
+      vehicles.set(this._config.vehicle, this._slugToLabel(this._config.vehicle));
+    }
+
+    return [...vehicles.entries()]
+      .sort((a, b) => a[1].localeCompare(b[1]))
+      .map(([value, label]) => ({ value, label }));
+  }
+
   _renderTabContent() {
     if (this._activeTab === "visibility") {
       return `
@@ -140,10 +175,17 @@ class FuelinoCardEditor extends HTMLElement {
       `;
     }
 
+    const vehicleOptions = this._vehicleOptions();
+
     return `
       <div class="stack">
-        ${this._input("Vehicle slug", "vehicle", "hyundai_i30")}
-        ${this._input("Card title", "title", "Hyundai i30")}
+        ${
+          vehicleOptions.length
+            ? this._select("Detected vehicle", "vehicle", vehicleOptions)
+            : `<div class="hint">No FuelinoHA vehicles were auto-detected yet. You can still enter the vehicle slug manually below.</div>`
+        }
+        ${this._input("Vehicle slug", "vehicle", "vehicle_slug")}
+        ${this._input("Card title", "title", "My car")}
         ${this._select("Layout", "layout", [
           { value: "costs", label: "Costs" },
           { value: "garage", label: "Garage" },
@@ -151,7 +193,7 @@ class FuelinoCardEditor extends HTMLElement {
         ])}
         <div class="hint">
           The card auto-reads entities from FuelinoHA using the vehicle slug. Example:
-          <code>sensor.hyundai_i30_total_vehicle_cost</code>
+          <code>sensor.vehicle_slug_total_vehicle_cost</code>
         </div>
       </div>
     `;

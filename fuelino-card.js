@@ -190,8 +190,8 @@ function ensureFuelinoCardEditorDefined() {
               ? this._select("Detected vehicle", "vehicle", vehicleOptions)
               : `<div class="hint">No FuelinoHA vehicles were auto-detected yet. You can still enter the vehicle slug manually below.</div>`
           }
-          ${this._input("Vehicle slug", "vehicle", "hyundai_i30")}
-          ${this._input("Card title", "title", "Hyundai i30")}
+          ${this._input("Vehicle slug", "vehicle", "vehicle_slug")}
+          ${this._input("Card title", "title", "My car")}
           ${this._select("Layout", "layout", [
             { value: "costs", label: "Costs" },
             { value: "fuelio", label: "Fuelio Stats" },
@@ -206,7 +206,7 @@ function ensureFuelinoCardEditorDefined() {
           ])}
           <div class="hint">
             The card auto-reads entities from FuelinoHA using the vehicle slug. Example:
-            <code>sensor.hyundai_i30_total_vehicle_cost</code>
+            <code>sensor.vehicle_slug_total_vehicle_cost</code>
           </div>
         </div>
       `;
@@ -447,8 +447,8 @@ class FuelinoCard extends HTMLElement {
   static getStubConfig() {
     return {
       type: "custom:fuelino-card",
-      vehicle: "hyundai_i30",
-      title: "Hyundai i30",
+      vehicle: "",
+      title: "",
       layout: "fuelio",
       trend_period: "180d",
       show_expenses: true,
@@ -2072,7 +2072,7 @@ class FuelinoCard extends HTMLElement {
           <div class="empty-shell">
             <div class="empty-shell__title">FuelinoHA Card</div>
             <div class="empty-shell__body">
-              Set <code>vehicle</code> to your Fuelino vehicle slug, for example <code>hyundai_i30</code>.
+              Set <code>vehicle</code> to your Fuelino vehicle slug, for example <code>vehicle_slug</code>.
             </div>
           </div>
         </ha-card>
