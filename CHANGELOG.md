@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.3.28
+
+Follow-up release for `FuelinoHA Card`.
+
+### Highlights
+
+- removed the `30d`, `90d`, `180d`, `1 rok`, and `Vse` period buttons from the `Cena paliva` trend card
+- kept the period selector available for the other trend charts
+
 ## v0.3.27
 
 Follow-up release for `FuelinoHA Card`.

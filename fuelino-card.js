@@ -1426,6 +1426,7 @@ class FuelinoCard extends HTMLElement {
     const total = cards.length;
     const activeIndex = Math.min(this._fuelioTrendSlide, total - 1);
     const card = cards[activeIndex];
+    const showPeriodSelector = !String(card.title || "").startsWith("Cena paliva");
     const periodSelector = `
       <div class="fuelio-trend__periods">
         ${this._trendPeriodOptions()
@@ -1456,7 +1457,7 @@ class FuelinoCard extends HTMLElement {
             <div class="fuelio-trend">
               <div class="fuelio-trend__meta">
                 <div class="fuelio-trend__eyebrow"><ha-icon icon="${card.icon}"></ha-icon> ${card.title}</div>
-                ${periodSelector}
+                ${showPeriodSelector ? periodSelector : ""}
                 <div class="fuelio-trend__metric">
                   <span class="fuelio-trend__value">${this._formatCurrencyValue(card.latest, card.unit, this._formatNumber(card.latest))}</span>
                   <span class="fuelio-trend__label">Posledni</span>
@@ -1513,7 +1514,7 @@ class FuelinoCard extends HTMLElement {
           <div class="fuelio-trend">
             <div class="fuelio-trend__meta">
               <div class="fuelio-trend__eyebrow"><ha-icon icon="${card.icon}"></ha-icon> ${card.title}</div>
-              ${periodSelector}
+              ${showPeriodSelector ? periodSelector : ""}
               <div class="fuelio-trend__metric">
                 <span class="fuelio-trend__value">${this._formatCurrencyValue(card.latest, card.unit, this._formatNumber(card.latest))}</span>
                 <span class="fuelio-trend__label">Posledni</span>
