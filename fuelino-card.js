@@ -637,7 +637,7 @@ class FuelinoCard extends HTMLElement {
   }
 
   _hasVehicle() {
-    return Boolean(this._config?.vehicle);
+    return Boolean(this._resolvedVehicleSlug());
   }
 
   _vehicleEntityRegex() {
@@ -720,11 +720,11 @@ class FuelinoCard extends HTMLElement {
 
   _resolvedVehicleSlug() {
     const selected = String(this._config?.vehicle || "").trim();
+    const vehicles = this._vehicleRecords();
     if (!selected) {
-      return "";
+      return vehicles[0]?.slug || "";
     }
 
-    const vehicles = this._vehicleRecords();
     const exactSlug = vehicles.find((vehicle) => vehicle.slug === selected);
     if (exactSlug) {
       return exactSlug.slug;

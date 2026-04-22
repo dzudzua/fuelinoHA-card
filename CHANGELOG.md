@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.3.25
+
+Follow-up release for `FuelinoHA Card`.
+
+### Highlights
+
+- automatically uses the first detected Fuelino vehicle when the card config does not specify `vehicle`
+- removed the need to manually select a vehicle just to get the card to render
+- kept manual vehicle selection available when you want to target a specific car
+
 ## v0.3.24
 
 Follow-up release for `FuelinoHA Card`.
