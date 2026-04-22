@@ -569,6 +569,7 @@ class FuelinoCard extends HTMLElement {
     this._resizeObserver = null;
     this._fuelioTrendSlide = 0;
     this._trendTouchStartX = null;
+    this._selectedVehicleSlug = "";
   }
 
   static async getConfigElement() {
@@ -590,6 +591,10 @@ class FuelinoCard extends HTMLElement {
   }
 
   setConfig(config) {
+    const configuredVehicle = String(config?.vehicle ?? "").trim();
+    if (configuredVehicle !== String(this._config?.vehicle ?? "").trim()) {
+      this._selectedVehicleSlug = "";
+    }
     this._config = {
       title: null,
       vehicle: "",
@@ -720,31 +725,87 @@ class FuelinoCard extends HTMLElement {
     return [...vehicles.values()].sort((a, b) => a.label.localeCompare(b.label));
   }
 
-  _resolvedVehicleSlug() {
-    const selected = String(this._config?.vehicle || "").trim();
-    const vehicles = this._vehicleRecords();
+  _findVehicleRecordByValue(value) {
+    const selected = String(value || "").trim();
     if (!selected) {
-      return vehicles[0]?.slug || "";
+      return null;
     }
 
+    const vehicles = this._vehicleRecords();
     const exactSlug = vehicles.find((vehicle) => vehicle.slug === selected);
     if (exactSlug) {
-      return exactSlug.slug;
+      return exactSlug;
     }
 
     const normalizedSelected = this._normalizedVehicleValue(selected);
-    const match = vehicles.find((vehicle) => {
-      return (
-        this._normalizedVehicleValue(vehicle.label) === normalizedSelected ||
-        this._normalizedVehicleValue(this._slugToLabel(vehicle.slug)) === normalizedSelected
-      );
-    });
+    return (
+      vehicles.find((vehicle) => {
+        return (
+          this._normalizedVehicleValue(vehicle.label) === normalizedSelected ||
+          this._normalizedVehicleValue(this._slugToLabel(vehicle.slug)) === normalizedSelected
+        );
+      }) || null
+    );
+  }
 
-    return match?.slug || selected;
+  _resolvedVehicleSlug() {
+    const explicitlySelected = this._findVehicleRecordByValue(this._selectedVehicleSlug);
+    if (explicitlySelected) {
+      return explicitlySelected.slug;
+    }
+
+    const configured = this._findVehicleRecordByValue(this._config?.vehicle);
+    if (configured) {
+      return configured.slug;
+    }
+
+    return this._vehicleRecords()[0]?.slug || String(this._config?.vehicle || "").trim();
   }
 
   _availableVehicles() {
     return this._vehicleRecords().map((vehicle) => vehicle.label);
+  }
+
+  _activeVehicleRecord() {
+    const slug = this._resolvedVehicleSlug();
+    return this._vehicleRecords().find((vehicle) => vehicle.slug === slug) || null;
+  }
+
+  _setActiveVehicle(slug) {
+    const next = String(slug || "").trim();
+    if (!next || next === this._resolvedVehicleSlug()) {
+      return;
+    }
+    this._selectedVehicleSlug = next;
+    if (this._hass && this.shadowRoot) {
+      this._render();
+    }
+  }
+
+  _vehicleSwitcher() {
+    const vehicles = this._vehicleRecords();
+    if (vehicles.length < 2) {
+      return "";
+    }
+
+    const activeSlug = this._resolvedVehicleSlug();
+    return `
+      <div class="fuelio-vehicle-switcher">
+        ${vehicles
+          .map(
+            (vehicle) => `
+              <button
+                type="button"
+                class="fuelio-vehicle-switcher__button ${vehicle.slug === activeSlug ? "is-active" : ""}"
+                data-vehicle-slug="${vehicle.slug}"
+              >
+                ${vehicle.label}
+              </button>
+            `
+          )
+          .join("")}
+      </div>
+    `;
   }
 
   _hasVehicleData() {
@@ -1018,7 +1079,11 @@ class FuelinoCard extends HTMLElement {
   }
 
   _vehicleLabel() {
-    return this._config.title || this._config.vehicle.replaceAll("_", " ");
+    const active = this._activeVehicleRecord();
+    if (active?.label) {
+      return active.label;
+    }
+    return this._config.title || this._resolvedVehicleSlug().replaceAll("_", " ");
   }
 
   _expenseSummary() {
@@ -1789,6 +1854,7 @@ class FuelinoCard extends HTMLElement {
               </div>
               <ha-icon icon="mdi:chevron-down"></ha-icon>
             </div>
+            ${this._vehicleSwitcher()}
           </header>
           `
               : ""
@@ -1970,6 +2036,7 @@ class FuelinoCard extends HTMLElement {
               </div>
               <ha-icon icon="mdi:chevron-down"></ha-icon>
             </div>
+            ${this._vehicleSwitcher()}
           </header>
           <section class="compact-panel">
             <div class="compact-panel__price">${this._formatState("last_price_per_unit")}</div>
@@ -2031,6 +2098,7 @@ class FuelinoCard extends HTMLElement {
               </div>
               <ha-icon icon="mdi:chevron-down"></ha-icon>
             </div>
+            ${this._vehicleSwitcher()}
           </header>
 
           <section class="fuelio-section">
@@ -2244,6 +2312,15 @@ class FuelinoCard extends HTMLElement {
   }
 
   _attachFuelioTrendEvents() {
+    this.shadowRoot.querySelectorAll("[data-vehicle-slug]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const slug = button.getAttribute("data-vehicle-slug");
+        if (slug) {
+          this._setActiveVehicle(slug);
+        }
+      });
+    });
+
     const carousel = this.shadowRoot?.querySelector("[data-trend-carousel]");
     if (!carousel) {
       return;
@@ -3012,6 +3089,30 @@ class FuelinoCard extends HTMLElement {
         .fuelio-vehicle__copy span {
           color: var(--fuelio-muted);
           font-size: 1rem;
+        }
+
+        .fuelio-vehicle-switcher {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          margin-top: 12px;
+        }
+
+        .fuelio-vehicle-switcher__button {
+          border: 0;
+          border-radius: 999px;
+          padding: 8px 12px;
+          background: rgba(255, 255, 255, 0.08);
+          color: rgba(244, 247, 255, 0.86);
+          font: inherit;
+          font-size: 0.82rem;
+          cursor: pointer;
+        }
+
+        .fuelio-vehicle-switcher__button.is-active {
+          background: color-mix(in srgb, var(--accent) 78%, white);
+          color: #111622;
+          font-weight: 700;
         }
 
         .fuelio-section {

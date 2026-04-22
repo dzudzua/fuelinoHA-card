@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.3.29
+
+Follow-up release for `FuelinoHA Card`.
+
+### Highlights
+
+- added an in-card vehicle switcher when multiple Fuelino vehicles are detected
+- you can now switch between detected cars directly from the card header
+- the card still auto-selects the configured or first detected vehicle by default
+
 ## v0.3.28
 
 Follow-up release for `FuelinoHA Card`.
