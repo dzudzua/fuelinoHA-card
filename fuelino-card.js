@@ -55,7 +55,8 @@ class FuelinoCardEditor extends HTMLElement {
     );
   }
 
-  _setValue(key, value) {
+  _setValue(key, value, options = {}) {
+    const { render = true } = options;
     const next = { ...this._config };
     if (value === "" || value === null || value === undefined) {
       delete next[key];
@@ -64,7 +65,10 @@ class FuelinoCardEditor extends HTMLElement {
     }
     this._config = next;
     this._dispatchConfig();
-    this._render();
+    this._syncPreview();
+    if (render) {
+      this._render();
+    }
   }
 
   _setTab(tab) {
@@ -353,7 +357,7 @@ class FuelinoCardEditor extends HTMLElement {
           this._setValue(key, Number.isFinite(parsed) ? parsed : "");
           return;
         }
-        this._setValue(key, field.value.trim());
+        this._setValue(key, field.value.trim(), { render: false });
       };
 
       if (field.tagName === "SELECT" || field.type === "checkbox") {
@@ -362,11 +366,14 @@ class FuelinoCardEditor extends HTMLElement {
       }
 
       field.addEventListener("input", handler);
-      field.addEventListener("change", handler);
+      field.addEventListener("change", () => this._setValue(key, field.value.trim()));
     });
+  }
 
-    const preview = this.shadowRoot.querySelector("fuelino-card");
+  _syncPreview() {
+    const preview = this.shadowRoot?.querySelector("fuelino-card");
     if (preview) {
+      preview.setConfig(this._config);
       preview.hass = this._hass;
     }
   }
@@ -547,12 +554,7 @@ class FuelinoCardEditor extends HTMLElement {
       </div>
     `;
 
-    const preview = this.shadowRoot.querySelector("fuelino-card");
-    if (preview) {
-      preview.setConfig(this._config);
-      preview.hass = this._hass;
-    }
-
+    this._syncPreview();
     this._attachEvents();
   }
 }

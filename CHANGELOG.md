@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.3.26
+
+Follow-up release for `FuelinoHA Card`.
+
+### Highlights
+
+- fixed text input focus in the visual editor so typing into fields like `Card title` no longer drops focus after each character
+- updated the live preview to refresh without re-rendering the full editor form on every keystroke
+- kept normal re-render behavior for toggles, selects, and committed field changes
+
 ## v0.3.25
 
 Follow-up release for `FuelinoHA Card`.
