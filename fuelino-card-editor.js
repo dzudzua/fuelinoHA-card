@@ -5,6 +5,8 @@ class FuelinoCardEditor extends HTMLElement {
     super();
     this._config = {};
     this._activeTab = "base";
+    this._vehicleCatalog = [];
+    this._vehicleCatalogKey = "";
   }
 
   setConfig(config) {
@@ -12,7 +14,8 @@ class FuelinoCardEditor extends HTMLElement {
       type: "custom:fuelino-card",
       vehicle: "",
       title: "",
-      layout: "costs",
+      layout: "fuelio",
+      trend_period: "180d",
       accent_color: "#88d24f",
       card_background: "",
       border_radius: 28,
@@ -29,6 +32,8 @@ class FuelinoCardEditor extends HTMLElement {
   set hass(hass) {
     const shouldRender = !this._hass || !this.shadowRoot;
     this._hass = hass;
+    this._loadVehicleCatalog();
+
     if (shouldRender) {
       this._render();
       return;
@@ -122,6 +127,10 @@ class FuelinoCardEditor extends HTMLElement {
     return `<button class="tab ${this._activeTab === id ? "is-active" : ""}" data-tab="${id}">${label}</button>`;
   }
 
+  _vehicleEntityRegex() {
+    return /^sensor\.([a-z0-9_]+)_(total_vehicle_cost|total_cost|last_fill_date|fuel_cost_this_month|odometer)$/i;
+  }
+
   _slugToLabel(slug) {
     return String(slug || "")
       .split("_")
@@ -130,11 +139,45 @@ class FuelinoCardEditor extends HTMLElement {
       .join(" ");
   }
 
-  _vehicleOptions() {
+  _humanizeMetric(metric) {
+    return String(metric || "")
+      .split("_")
+      .filter(Boolean)
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(" ");
+  }
+
+  _fallbackVehicleLabelFromState(state, slug) {
+    const friendly = String(state?.attributes?.friendly_name || "").trim();
+    if (!friendly) {
+      return this._slugToLabel(slug);
+    }
+
+    const suffixes = [
+      "Total Vehicle Cost",
+      "Total Cost",
+      "Last Fill Date",
+      "Fuel Cost This Month",
+      "Odometer",
+      this._humanizeMetric(state?.entity_id?.split("_").slice(-3).join("_") || ""),
+    ].filter(Boolean);
+
+    for (const suffix of suffixes) {
+      if (friendly.endsWith(suffix)) {
+        const trimmed = friendly.slice(0, -suffix.length).trim();
+        if (trimmed) {
+          return trimmed;
+        }
+      }
+    }
+
+    return this._slugToLabel(slug);
+  }
+
+  _buildStateVehicleMap() {
     const states = Object.values(this._hass?.states || {});
     const vehicles = new Map();
-    const suffixPattern = "(total_vehicle_cost|total_cost|last_fill_date|fuel_cost_this_month|odometer)";
-    const regex = new RegExp(`^sensor\\.([a-z0-9_]+)_${suffixPattern}$`, "i");
+    const regex = this._vehicleEntityRegex();
 
     for (const state of states) {
       const entityId = state?.entity_id || "";
@@ -142,19 +185,99 @@ class FuelinoCardEditor extends HTMLElement {
       if (!match) {
         continue;
       }
+
       const slug = match[1];
       if (!vehicles.has(slug)) {
-        vehicles.set(slug, this._slugToLabel(slug));
+        vehicles.set(slug, {
+          value: slug,
+          label: this._fallbackVehicleLabelFromState(state, slug),
+        });
       }
     }
 
     if (this._config.vehicle && !vehicles.has(this._config.vehicle)) {
-      vehicles.set(this._config.vehicle, this._slugToLabel(this._config.vehicle));
+      vehicles.set(this._config.vehicle, {
+        value: this._config.vehicle,
+        label: this._slugToLabel(this._config.vehicle),
+      });
     }
 
-    return [...vehicles.entries()]
-      .sort((a, b) => a[1].localeCompare(b[1]))
-      .map(([value, label]) => ({ value, label }));
+    return vehicles;
+  }
+
+  async _loadVehicleCatalog() {
+    const stateVehicles = this._buildStateVehicleMap();
+    const stateKey = [...stateVehicles.keys()].sort().join("|");
+
+    if (!stateVehicles.size) {
+      if (this._vehicleCatalog.length) {
+        this._vehicleCatalog = [];
+        this._vehicleCatalogKey = "";
+        this._render();
+      }
+      return;
+    }
+
+    if (this._vehicleCatalogKey === stateKey && this._vehicleCatalog.length) {
+      return;
+    }
+
+    let catalog = [...stateVehicles.values()];
+    this._vehicleCatalogKey = stateKey;
+
+    try {
+      if (typeof this._hass?.callWS === "function") {
+        const regex = this._vehicleEntityRegex();
+        const [entityRegistry, deviceRegistry] = await Promise.all([
+          this._hass.callWS({ type: "config/entity_registry/list" }),
+          this._hass.callWS({ type: "config/device_registry/list" }),
+        ]);
+
+        if (this._vehicleCatalogKey !== stateKey) {
+          return;
+        }
+
+        const deviceMap = new Map(deviceRegistry.map((device) => [device.id, device]));
+
+        for (const entity of entityRegistry) {
+          const match = String(entity?.entity_id || "").match(regex);
+          if (!match) {
+            continue;
+          }
+
+          const slug = match[1];
+          const device = deviceMap.get(entity.device_id);
+          const label =
+            device?.name_by_user ||
+            device?.name ||
+            stateVehicles.get(slug)?.label ||
+            this._slugToLabel(slug);
+
+          stateVehicles.set(slug, { value: slug, label });
+        }
+
+        catalog = [...stateVehicles.values()];
+      }
+    } catch (_error) {
+      // Fall back to labels derived from entity states when registry access is unavailable.
+    }
+
+    catalog.sort((a, b) => a.label.localeCompare(b.label));
+    const nextSerialized = JSON.stringify(catalog);
+    const previousSerialized = JSON.stringify(this._vehicleCatalog);
+    if (nextSerialized !== previousSerialized) {
+      this._vehicleCatalog = catalog;
+      this._render();
+    } else {
+      this._vehicleCatalog = catalog;
+    }
+  }
+
+  _vehicleOptions() {
+    if (this._vehicleCatalog.length) {
+      return this._vehicleCatalog;
+    }
+    return [...this._buildStateVehicleMap().values()].sort((a, b) => a.label.localeCompare(b.label));
   }
 
   _renderTabContent() {
@@ -197,12 +320,19 @@ class FuelinoCardEditor extends HTMLElement {
         ${this._input("Card title", "title", "My car")}
         ${this._select("Layout", "layout", [
           { value: "costs", label: "Costs" },
-          { value: "garage", label: "Garage" },
+          { value: "fuelio", label: "Fuelio Stats" },
           { value: "compact", label: "Compact" },
         ])}
+        ${this._select("Trend period", "trend_period", [
+          { value: "30d", label: "Last 30 days" },
+          { value: "90d", label: "Last 90 days" },
+          { value: "180d", label: "Last 180 days" },
+          { value: "365d", label: "Last year" },
+          { value: "all", label: "All data" },
+        ])}
         <div class="hint">
-          The card auto-reads entities from FuelinoHA using the vehicle slug. Example:
-          <code>sensor.vehicle_slug_total_vehicle_cost</code>
+          Pick a detected vehicle by its Home Assistant device name, or enter the raw vehicle slug manually if needed.
+          Example entity pattern: <code>sensor.vehicle_slug_total_vehicle_cost</code>
         </div>
       </div>
     `;
@@ -272,6 +402,13 @@ class FuelinoCardEditor extends HTMLElement {
           background: rgba(18, 24, 38, 0.9);
           border: 1px solid rgba(255, 255, 255, 0.08);
           padding: 20px;
+        }
+
+        .preview {
+          min-width: 0;
+          overflow: hidden;
+          position: relative;
+          isolation: isolate;
         }
 
         .panel__header {
@@ -370,8 +507,18 @@ class FuelinoCardEditor extends HTMLElement {
           margin-bottom: 12px;
         }
 
+        .preview__frame {
+          min-width: 0;
+          max-width: 100%;
+          overflow: hidden;
+          border-radius: 24px;
+        }
+
         fuelino-card {
           display: block;
+          width: 100%;
+          max-width: 100%;
+          min-width: 0;
         }
 
         @media (max-width: 920px) {
@@ -395,7 +542,9 @@ class FuelinoCardEditor extends HTMLElement {
         </section>
         <section class="preview">
           <div class="preview__title">Live preview</div>
-          <fuelino-card></fuelino-card>
+          <div class="preview__frame">
+            <fuelino-card></fuelino-card>
+          </div>
         </section>
       </div>
     `;

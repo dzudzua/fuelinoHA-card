@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.3.22
+
+Follow-up release for `FuelinoHA Card`.
+
+### Highlights
+
+- removed the duplicated embedded editor from `fuelino-card.js`
+- made `fuelino-card-editor.js` the single source of truth for the visual editor
+- switched the card to dynamically import the standalone editor file
+- upgraded detected vehicle labels to use Home Assistant device names when available
+- updated manual installation docs to include both `fuelino-card.js` and `fuelino-card-editor.js`
+
 ## v0.3.17
 
 Follow-up release for `FuelinoHA Card`.

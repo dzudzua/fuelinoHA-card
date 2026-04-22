@@ -29,7 +29,7 @@ Current features:
   - `compact`
 - interactive fuel trend carousel with swipe and click navigation
 - configurable graph period for the `fuelio` layout
-- reads Fuelino sensor entities from one vehicle slug, for example `hyundai_i30`
+- reads Fuelino sensor entities from one FuelinoHA vehicle slug and can detect available cars by Home Assistant device name in the editor
 - shows:
   - last fill
   - price per unit
@@ -51,8 +51,8 @@ Current features:
 
 ### Manual
 
-1. Copy `fuelino-card.js` to your Home Assistant `www` folder
-2. Add it as a Lovelace resource
+1. Copy both `fuelino-card.js` and `fuelino-card-editor.js` to your Home Assistant `www` folder
+2. Add `fuelino-card.js` as a Lovelace resource
 3. Use the card in a dashboard
 
 Example resource:
@@ -66,15 +66,15 @@ type: module
 
 ```yaml
 type: custom:fuelino-card
-vehicle: hyundai_i30
-title: Hyundai i30
+vehicle: vehicle_slug
+title: My car
 layout: fuelio
 trend_period: 180d
 ```
 
 Supported options:
 
-- `vehicle`: vehicle slug used in entity ids, for example `hyundai_i30`
+- `vehicle`: FuelinoHA vehicle slug used in entity ids, for example `vehicle_slug`
 - `title`: optional title override
 - `layout`: `costs`, `fuelio`, or `compact`
 - `trend_period`: `30d`, `90d`, `180d`, `365d`, or `all`
@@ -89,16 +89,16 @@ Supported options:
 
 ## Example entity mapping
 
-If `vehicle: hyundai_i30`, the card will read entities like:
+If `vehicle: vehicle_slug`, the card will read entities like:
 
-- `sensor.hyundai_i30_last_fill_date`
-- `sensor.hyundai_i30_last_fill_cost`
-- `sensor.hyundai_i30_last_price_per_unit`
-- `sensor.hyundai_i30_odometer`
-- `sensor.hyundai_i30_fuel_cost_this_month`
-- `sensor.hyundai_i30_expense_cost_this_month`
-- `sensor.hyundai_i30_last_service_date`
-- `sensor.hyundai_i30_last_trip_date`
+- `sensor.vehicle_slug_last_fill_date`
+- `sensor.vehicle_slug_last_fill_cost`
+- `sensor.vehicle_slug_last_price_per_unit`
+- `sensor.vehicle_slug_odometer`
+- `sensor.vehicle_slug_fuel_cost_this_month`
+- `sensor.vehicle_slug_expense_cost_this_month`
+- `sensor.vehicle_slug_last_service_date`
+- `sensor.vehicle_slug_last_trip_date`
 
 ## Example cards
 
@@ -114,7 +114,8 @@ See:
 - it is designed specifically around the sensor model exposed by `FuelinoHA`
 - the new `costs` layout is inspired by the mobile Fuelio/Fuelino statistics screens and is intended as the primary layout
 - the visual editor currently focuses on `Base`, `Visibility`, and `Style` tabs with live preview
-- the editor tries to detect available FuelinoHA vehicles from your Home Assistant sensor registry and offers them in a dropdown
+- the editor uses a single standalone source file: `fuelino-card-editor.js`
+- the editor tries to detect available FuelinoHA vehicles from your Home Assistant registry and shows them by device name when possible
 
 ## Support
 
