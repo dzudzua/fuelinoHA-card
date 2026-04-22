@@ -56,7 +56,7 @@ class FuelinoCardEditor extends HTMLElement {
   }
 
   _setValue(key, value, options = {}) {
-    const { render = true } = options;
+    const { render = true, dispatch = true } = options;
     const next = { ...this._config };
     if (value === "" || value === null || value === undefined) {
       delete next[key];
@@ -64,7 +64,9 @@ class FuelinoCardEditor extends HTMLElement {
       next[key] = value;
     }
     this._config = next;
-    this._dispatchConfig();
+    if (dispatch) {
+      this._dispatchConfig();
+    }
     this._syncPreview();
     if (render) {
       this._render();
@@ -402,7 +404,7 @@ class FuelinoCardEditor extends HTMLElement {
           this._setValue(key, Number.isFinite(parsed) ? parsed : "");
           return;
         }
-        this._setValue(key, field.value.trim(), { render: false });
+        this._setValue(key, field.value.trim(), { render: false, dispatch: false });
       };
 
       if (field.tagName === "SELECT" || field.type === "checkbox") {
@@ -411,7 +413,7 @@ class FuelinoCardEditor extends HTMLElement {
       }
 
       field.addEventListener("input", handler);
-      field.addEventListener("change", () => this._setValue(key, field.value.trim()));
+      field.addEventListener("change", () => this._setValue(key, field.value.trim(), { render: false }));
     });
   }
 

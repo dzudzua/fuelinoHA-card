@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.3.31
+
+Follow-up release for `FuelinoHA Card`.
+
+### Highlights
+
+- fixed `Card title` text entry in the visual editor again
+- text fields now update the live preview while typing without firing a full config change on every keystroke
+- the final config is committed when the field change is confirmed
+
 ## v0.3.30
 
 Follow-up release for `FuelinoHA Card`.
