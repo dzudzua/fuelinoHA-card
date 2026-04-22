@@ -27,8 +27,17 @@ class FuelinoCardEditor extends HTMLElement {
   }
 
   set hass(hass) {
+    const shouldRender = !this._hass || !this.shadowRoot;
     this._hass = hass;
-    this._render();
+    if (shouldRender) {
+      this._render();
+      return;
+    }
+
+    const preview = this.shadowRoot.querySelector("fuelino-card");
+    if (preview) {
+      preview.hass = hass;
+    }
   }
 
   _dispatchConfig() {
