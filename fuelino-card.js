@@ -298,10 +298,11 @@ class FuelinoCardEditor extends HTMLElement {
 
           const slug = match[1];
           const device = deviceMap.get(entity.device_id);
+          const stateLabel = stateVehicles.get(slug)?.label || "";
           const label =
+            stateLabel ||
             (device?.name_by_user ? this._cleanVehicleLabel(device.name_by_user, slug) : "") ||
             (device?.name ? this._cleanVehicleLabel(device.name, slug) : "") ||
-            stateVehicles.get(slug)?.label ||
             this._slugToLabel(slug);
 
           stateVehicles.set(slug, { value: slug, label });

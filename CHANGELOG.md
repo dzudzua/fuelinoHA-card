@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.3.32
+
+Follow-up release for `FuelinoHA Card`.
+
+### Highlights
+
+- fixed vehicle selection labels in the editor for multi-car setups
+- the editor now prefers Fuelino vehicle names from sensor data instead of unrelated Home Assistant device names
+- prevents phone names such as `Poco` from replacing the actual car label
+
 ## v0.3.31
 
 Follow-up release for `FuelinoHA Card`.
