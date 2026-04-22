@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.3.27
+
+Follow-up release for `FuelinoHA Card`.
+
+### Highlights
+
+- added visible value labels directly into the trend charts
+- bar charts now show each value above its column
+- line charts now show each value near its data point
+
 ## v0.3.26
 
 Follow-up release for `FuelinoHA Card`.

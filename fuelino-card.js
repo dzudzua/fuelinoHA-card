@@ -1171,6 +1171,31 @@ class FuelinoCard extends HTMLElement {
     return palettes[kind] || palettes.default;
   }
 
+  _formatChartValue(value, unit = "") {
+    const numeric = this._numberFromValue(value);
+    if (numeric === null) {
+      return "—";
+    }
+
+    const normalizedUnit = String(unit || "").trim();
+    const shortUnitMap = {
+      "Kč": "Kč",
+      CZK: "Kč",
+      km: "km",
+      l: "L",
+      L: "L",
+      "l/100 km": "L/100",
+      "L/100 km": "L/100",
+    };
+    const shortUnit = shortUnitMap[normalizedUnit] || normalizedUnit;
+    const decimals = Math.abs(numeric) >= 100 ? 0 : Math.abs(numeric) >= 10 ? 1 : 2;
+    const formatted = this._formatNumber(numeric, {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: decimals,
+    });
+    return shortUnit ? `${formatted} ${shortUnit}` : formatted;
+  }
+
   _compactDateLabel(date) {
     if (!date) {
       return "N/A";
@@ -1373,6 +1398,26 @@ class FuelinoCard extends HTMLElement {
       .join(" ");
   }
 
+  _trendCoordinates(values, width = 420, height = 170) {
+    if (!Array.isArray(values) || values.length === 0) {
+      return [];
+    }
+
+    if (values.length === 1) {
+      return [{ x: 0, y: height / 2, value: values[0] }, { x: width, y: height / 2, value: values[0] }];
+    }
+
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    const range = max - min || 1;
+
+    return values.map((value, index) => ({
+      value,
+      x: Number(((index / (values.length - 1)) * width).toFixed(1)),
+      y: Number((height - ((value - min) / range) * height).toFixed(1)),
+    }));
+  }
+
   _fuelioTrendCard() {
     const cards = this._buildFuelioTrendCards();
     if (cards.length === 0) {
@@ -1434,6 +1479,7 @@ class FuelinoCard extends HTMLElement {
                     .map(
                       (height, index) => `
                     <div class="fuelio-bars__col">
+                      <div class="fuelio-bars__value">${this._formatChartValue(card.values[index], card.unit)}</div>
                       <div class="fuelio-bars__plot">
                         <div class="fuelio-bars__bar ${index === heights.length - 1 ? "is-active" : ""}" style="height:${height.toFixed(1)}px"></div>
                       </div>
@@ -1456,6 +1502,7 @@ class FuelinoCard extends HTMLElement {
     }
 
     const points = this._trendPoints(card.values);
+    const coordinates = this._trendCoordinates(card.values);
     const max = Math.max(...card.values);
     const min = Math.min(...card.values);
     const avgY = 170 - ((((card.average ?? min) - min) / ((max - min) || 1)) * 170);
@@ -1491,12 +1538,14 @@ class FuelinoCard extends HTMLElement {
                 <line x1="0" y1="${avgY.toFixed(1)}" x2="420" y2="${avgY.toFixed(1)}" class="fuelio-trend__avg"></line>
                 <polyline points="${points} 420,170 0,170" class="fuelio-trend__area" style="fill:url(#fuelioTrendFill-${activeIndex})"></polyline>
                 <polyline points="${points}" class="fuelio-trend__line"></polyline>
-                ${points
-                  .split(" ")
-                  .map((point, index, all) => {
-                    const [x, y] = point.split(",");
+                ${coordinates
+                  .map(({ x, y, value }, index, all) => {
                     const active = index === all.length - 1 ? "is-active" : "";
-                    return `<circle cx="${x}" cy="${y}" r="${index === all.length - 1 ? 7 : 4.5}" class="fuelio-trend__dot ${active}"></circle>`;
+                    const labelY = Math.max(16, y - 12);
+                    return `
+                      <text x="${x}" y="${labelY}" class="fuelio-trend__point-value ${active}">${this._formatChartValue(value, card.unit)}</text>
+                      <circle cx="${x}" cy="${y}" r="${index === all.length - 1 ? 7 : 4.5}" class="fuelio-trend__dot ${active}"></circle>
+                    `;
                   })
                   .join("")}
               </svg>
@@ -3194,6 +3243,21 @@ class FuelinoCard extends HTMLElement {
           stroke-width: 6;
         }
 
+        .fuelio-trend__point-value {
+          fill: rgba(244, 247, 255, 0.92);
+          font-size: 10px;
+          font-weight: 700;
+          text-anchor: middle;
+          paint-order: stroke;
+          stroke: rgba(14, 19, 30, 0.78);
+          stroke-width: 3px;
+          stroke-linejoin: round;
+        }
+
+        .fuelio-trend__point-value.is-active {
+          fill: #fff7da;
+        }
+
         .fuelio-trend__avg {
           stroke: rgba(255, 255, 255, 0.28);
           stroke-width: 2;
@@ -3249,9 +3313,20 @@ class FuelinoCard extends HTMLElement {
 
         .fuelio-bars__col {
           display: grid;
-          grid-template-rows: 180px auto;
+          grid-template-rows: auto 180px auto;
           gap: 10px;
           min-width: 0;
+        }
+
+        .fuelio-bars__value {
+          min-width: 0;
+          color: rgba(244, 247, 255, 0.92);
+          font-size: 0.78rem;
+          font-weight: 700;
+          line-height: 1.2;
+          text-align: center;
+          word-break: break-word;
+          text-wrap: balance;
         }
 
         .fuelio-bars__plot {
