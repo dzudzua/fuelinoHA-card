@@ -151,10 +151,55 @@ class FuelinoCardEditor extends HTMLElement {
       .join(" ");
   }
 
+  _composeVehicleDetailsLabel(attrs = {}) {
+    const make = String(attrs?.make || "").trim();
+    const model = String(attrs?.model || "").trim();
+    const year = String(attrs?.year || "").trim();
+    const parts = [make, model].filter(Boolean);
+    if (year) {
+      parts.push(year);
+    }
+    return parts.join(" ").trim();
+  }
+
+  _cleanVehicleLabel(label, slug = "") {
+    const raw = String(label || "").trim();
+    if (!raw) {
+      return this._slugToLabel(slug);
+    }
+
+    const withoutExtension = raw.replace(/\.(csv|zip)$/gi, "");
+    const normalizedSpacing = withoutExtension.replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim();
+    const cleaned = normalizedSpacing
+      .replace(/\b(sync|backup|export)\b/gi, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    const genericMatch = cleaned.match(/^vehicle\s+(\d+)\b/i);
+    if (genericMatch) {
+      return `Vehicle ${genericMatch[1]}`;
+    }
+
+    if (!cleaned) {
+      return this._slugToLabel(slug);
+    }
+
+    return cleaned
+      .split(" ")
+      .filter(Boolean)
+      .map((part) => (part.length <= 3 ? part.toUpperCase() : part.charAt(0).toUpperCase() + part.slice(1)))
+      .join(" ");
+  }
+
   _fallbackVehicleLabelFromState(state, slug) {
+    const vehicleDetails = this._composeVehicleDetailsLabel(state?.attributes);
+    if (vehicleDetails) {
+      return vehicleDetails;
+    }
+
     const friendly = String(state?.attributes?.friendly_name || "").trim();
     if (!friendly) {
-      return this._slugToLabel(slug);
+      return this._cleanVehicleLabel("", slug);
     }
 
     const suffixes = [
@@ -170,12 +215,12 @@ class FuelinoCardEditor extends HTMLElement {
       if (friendly.endsWith(suffix)) {
         const trimmed = friendly.slice(0, -suffix.length).trim();
         if (trimmed) {
-          return trimmed;
+          return this._cleanVehicleLabel(trimmed, slug);
         }
       }
     }
 
-    return this._slugToLabel(slug);
+    return this._cleanVehicleLabel(friendly, slug);
   }
 
   _buildStateVehicleMap() {
@@ -252,8 +297,8 @@ class FuelinoCardEditor extends HTMLElement {
           const slug = match[1];
           const device = deviceMap.get(entity.device_id);
           const label =
-            device?.name_by_user ||
-            device?.name ||
+            (device?.name_by_user ? this._cleanVehicleLabel(device.name_by_user, slug) : "") ||
+            (device?.name ? this._cleanVehicleLabel(device.name, slug) : "") ||
             stateVehicles.get(slug)?.label ||
             this._slugToLabel(slug);
 
@@ -668,10 +713,55 @@ class FuelinoCard extends HTMLElement {
       .join(" ");
   }
 
+  _composeVehicleDetailsLabel(attrs = {}) {
+    const make = String(attrs?.make || "").trim();
+    const model = String(attrs?.model || "").trim();
+    const year = String(attrs?.year || "").trim();
+    const parts = [make, model].filter(Boolean);
+    if (year) {
+      parts.push(year);
+    }
+    return parts.join(" ").trim();
+  }
+
+  _cleanVehicleLabel(label, slug = "") {
+    const raw = String(label || "").trim();
+    if (!raw) {
+      return this._slugToLabel(slug);
+    }
+
+    const withoutExtension = raw.replace(/\.(csv|zip)$/gi, "");
+    const normalizedSpacing = withoutExtension.replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim();
+    const cleaned = normalizedSpacing
+      .replace(/\b(sync|backup|export)\b/gi, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    const genericMatch = cleaned.match(/^vehicle\s+(\d+)\b/i);
+    if (genericMatch) {
+      return `Vehicle ${genericMatch[1]}`;
+    }
+
+    if (!cleaned) {
+      return this._slugToLabel(slug);
+    }
+
+    return cleaned
+      .split(" ")
+      .filter(Boolean)
+      .map((part) => (part.length <= 3 ? part.toUpperCase() : part.charAt(0).toUpperCase() + part.slice(1)))
+      .join(" ");
+  }
+
   _fallbackVehicleLabelFromState(state, slug) {
+    const vehicleDetails = this._composeVehicleDetailsLabel(state?.attributes);
+    if (vehicleDetails) {
+      return vehicleDetails;
+    }
+
     const friendly = String(state?.attributes?.friendly_name || "").trim();
     if (!friendly) {
-      return this._slugToLabel(slug);
+      return this._cleanVehicleLabel("", slug);
     }
 
     const suffixes = [
@@ -687,12 +777,12 @@ class FuelinoCard extends HTMLElement {
       if (friendly.endsWith(suffix)) {
         const trimmed = friendly.slice(0, -suffix.length).trim();
         if (trimmed) {
-          return trimmed;
+          return this._cleanVehicleLabel(trimmed, slug);
         }
       }
     }
 
-    return this._slugToLabel(slug);
+    return this._cleanVehicleLabel(friendly, slug);
   }
 
   _normalizedVehicleValue(value) {

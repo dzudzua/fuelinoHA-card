@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.3.30
+
+Follow-up release for `FuelinoHA Card`.
+
+### Highlights
+
+- improved detected vehicle labels for multi-car setups
+- the card now prefers parsed vehicle details like make, model, and year when available
+- file-based labels such as `vehicle-2-sync.csv.zip` are now cleaned into a simpler vehicle name
+
 ## v0.3.29
 
 Follow-up release for `FuelinoHA Card`.
