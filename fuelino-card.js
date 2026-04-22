@@ -119,6 +119,41 @@ function ensureFuelinoCardEditorDefined() {
       return `<button class="tab ${this._activeTab === id ? "is-active" : ""}" data-tab="${id}">${label}</button>`;
     }
 
+    _slugToLabel(slug) {
+      return String(slug || "")
+        .split("_")
+        .filter(Boolean)
+        .map((part) => (part.length <= 3 ? part.toUpperCase() : part.charAt(0).toUpperCase() + part.slice(1)))
+        .join(" ");
+    }
+
+    _vehicleOptions() {
+      const states = Object.values(this._hass?.states || {});
+      const vehicles = new Map();
+      const suffixPattern = "(total_vehicle_cost|total_cost|last_fill_date|fuel_cost_this_month|odometer)";
+      const regex = new RegExp(`^sensor\\.([a-z0-9_]+)_${suffixPattern}$`, "i");
+
+      for (const state of states) {
+        const entityId = state?.entity_id || "";
+        const match = entityId.match(regex);
+        if (!match) {
+          continue;
+        }
+        const slug = match[1];
+        if (!vehicles.has(slug)) {
+          vehicles.set(slug, this._slugToLabel(slug));
+        }
+      }
+
+      if (this._config.vehicle && !vehicles.has(this._config.vehicle)) {
+        vehicles.set(this._config.vehicle, this._slugToLabel(this._config.vehicle));
+      }
+
+      return [...vehicles.entries()]
+        .sort((a, b) => a[1].localeCompare(b[1]))
+        .map(([value, label]) => ({ value, label }));
+    }
+
     _renderTabContent() {
       if (this._activeTab === "visibility") {
         return `
@@ -146,8 +181,15 @@ function ensureFuelinoCardEditorDefined() {
         `;
       }
 
+      const vehicleOptions = this._vehicleOptions();
+
       return `
         <div class="stack">
+          ${
+            vehicleOptions.length
+              ? this._select("Detected vehicle", "vehicle", vehicleOptions)
+              : `<div class="hint">No FuelinoHA vehicles were auto-detected yet. You can still enter the vehicle slug manually below.</div>`
+          }
           ${this._input("Vehicle slug", "vehicle", "hyundai_i30")}
           ${this._input("Card title", "title", "Hyundai i30")}
           ${this._select("Layout", "layout", [
@@ -467,6 +509,37 @@ class FuelinoCard extends HTMLElement {
 
   _hasVehicle() {
     return Boolean(this._config?.vehicle);
+  }
+
+  _availableVehicles() {
+    const states = Object.values(this._hass?.states || {});
+    const vehicles = new Set();
+    const suffixPattern = "(total_vehicle_cost|total_cost|last_fill_date|fuel_cost_this_month|odometer)";
+    const regex = new RegExp(`^sensor\\.([a-z0-9_]+)_${suffixPattern}$`, "i");
+
+    for (const state of states) {
+      const match = String(state?.entity_id || "").match(regex);
+      if (match) {
+        vehicles.add(match[1]);
+      }
+    }
+
+    return [...vehicles].sort();
+  }
+
+  _hasVehicleData() {
+    if (!this._hasVehicle()) {
+      return false;
+    }
+
+    const candidates = [
+      "total_vehicle_cost",
+      "total_cost",
+      "last_fill_date",
+      "fuel_cost_this_month",
+      "odometer",
+    ];
+    return candidates.some((suffix) => Boolean(this._entity(suffix)));
   }
 
   _ensureResizeObserver() {
@@ -2000,6 +2073,62 @@ class FuelinoCard extends HTMLElement {
             <div class="empty-shell__title">FuelinoHA Card</div>
             <div class="empty-shell__body">
               Set <code>vehicle</code> to your Fuelino vehicle slug, for example <code>hyundai_i30</code>.
+            </div>
+          </div>
+        </ha-card>
+      `;
+      return;
+    }
+
+    if (!this._hasVehicleData()) {
+      const availableVehicles = this._availableVehicles();
+      this.shadowRoot.innerHTML = `
+        <style>
+          :host {
+            display: block;
+          }
+
+          ha-card {
+            overflow: hidden;
+            border-radius: 24px;
+            box-shadow: none;
+          }
+
+          .empty-shell {
+            padding: 20px;
+            border-radius: 24px;
+            background: linear-gradient(180deg, #3a3413 0%, #262004 100%);
+            color: #f4f5ef;
+            display: grid;
+            gap: 10px;
+          }
+
+          .empty-shell__title {
+            font-size: 1rem;
+            font-weight: 700;
+          }
+
+          .empty-shell__body {
+            color: rgba(244, 245, 239, 0.78);
+            line-height: 1.5;
+          }
+
+          code {
+            padding: 2px 6px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.08);
+          }
+        </style>
+        <ha-card>
+          <div class="empty-shell">
+            <div class="empty-shell__title">FuelinoHA Card</div>
+            <div class="empty-shell__body">
+              No FuelinoHA sensors were found for <code>${this._config.vehicle}</code>.
+              ${
+                availableVehicles.length
+                  ? `Available vehicles: <code>${availableVehicles.join("</code>, <code>")}</code>.`
+                  : "No vehicles were auto-detected yet."
+              }
             </div>
           </div>
         </ha-card>

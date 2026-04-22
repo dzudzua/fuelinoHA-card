@@ -22,6 +22,7 @@ Current features:
 
 - custom card without build step
 - built-in visual editor for Home Assistant card configuration
+- auto-detected vehicle picker in the editor
 - three layouts:
   - `costs`
   - `fuelio`
@@ -113,6 +114,7 @@ See:
 - it is designed specifically around the sensor model exposed by `FuelinoHA`
 - the new `costs` layout is inspired by the mobile Fuelio/Fuelino statistics screens and is intended as the primary layout
 - the visual editor currently focuses on `Base`, `Visibility`, and `Style` tabs with live preview
+- the editor tries to detect available FuelinoHA vehicles from your Home Assistant sensor registry and offers them in a dropdown
 
 ## Support
 
