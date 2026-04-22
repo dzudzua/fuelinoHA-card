@@ -232,6 +232,11 @@ function ensureFuelinoCardEditorDefined() {
           this._setValue(key, field.value.trim());
         };
 
+        if (field.tagName === "SELECT" || field.type === "checkbox") {
+          field.addEventListener("change", handler);
+          return;
+        }
+
         field.addEventListener("input", handler);
         field.addEventListener("change", handler);
       });
