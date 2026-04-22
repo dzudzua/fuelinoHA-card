@@ -1,3 +1,566 @@
+const FUELINO_CARD_EDITOR_TAG = "fuelino-card-editor";
+
+class FuelinoCardEditor extends HTMLElement {
+  constructor() {
+    super();
+    this._config = {};
+    this._activeTab = "base";
+    this._vehicleCatalog = [];
+    this._vehicleCatalogKey = "";
+  }
+
+  setConfig(config) {
+    this._config = {
+      type: "custom:fuelino-card",
+      vehicle: "",
+      title: "",
+      layout: "fuelio",
+      trend_period: "180d",
+      accent_color: "#88d24f",
+      card_background: "",
+      border_radius: 28,
+      show_expenses: true,
+      show_trips: true,
+      show_empty_categories: false,
+      show_header: true,
+      dense_mode: false,
+      ...config,
+    };
+    this._render();
+  }
+
+  set hass(hass) {
+    const shouldRender = !this._hass || !this.shadowRoot;
+    this._hass = hass;
+    this._loadVehicleCatalog();
+
+    if (shouldRender) {
+      this._render();
+      return;
+    }
+
+    const preview = this.shadowRoot.querySelector("fuelino-card");
+    if (preview) {
+      preview.hass = hass;
+    }
+  }
+
+  _dispatchConfig() {
+    this.dispatchEvent(
+      new CustomEvent("config-changed", {
+        detail: { config: this._config },
+        bubbles: true,
+        composed: true,
+      })
+    );
+  }
+
+  _setValue(key, value) {
+    const next = { ...this._config };
+    if (value === "" || value === null || value === undefined) {
+      delete next[key];
+    } else {
+      next[key] = value;
+    }
+    this._config = next;
+    this._dispatchConfig();
+    this._render();
+  }
+
+  _setTab(tab) {
+    this._activeTab = tab;
+    this._render();
+  }
+
+  _input(label, key, placeholder = "") {
+    const value = this._config[key] ?? "";
+    return `
+      <label class="field">
+        <span class="field__label">${label}</span>
+        <input data-key="${key}" type="text" value="${String(value).replace(/"/g, "&quot;")}" placeholder="${placeholder}">
+      </label>
+    `;
+  }
+
+  _number(label, key, min = 0, max = 999) {
+    const value = this._config[key] ?? "";
+    return `
+      <label class="field">
+        <span class="field__label">${label}</span>
+        <input data-key="${key}" type="number" min="${min}" max="${max}" value="${value}">
+      </label>
+    `;
+  }
+
+  _select(label, key, options) {
+    const current = this._config[key] ?? "";
+    return `
+      <label class="field">
+        <span class="field__label">${label}</span>
+        <select data-key="${key}">
+          ${options
+            .map(
+              (option) => `
+            <option value="${option.value}" ${current === option.value ? "selected" : ""}>${option.label}</option>
+          `
+            )
+            .join("")}
+        </select>
+      </label>
+    `;
+  }
+
+  _toggle(label, key, note = "") {
+    const checked = Boolean(this._config[key]);
+    return `
+      <label class="toggle">
+        <div>
+          <div class="toggle__label">${label}</div>
+          ${note ? `<div class="toggle__note">${note}</div>` : ""}
+        </div>
+        <input data-key="${key}" type="checkbox" ${checked ? "checked" : ""}>
+      </label>
+    `;
+  }
+
+  _tabButton(id, label) {
+    return `<button class="tab ${this._activeTab === id ? "is-active" : ""}" data-tab="${id}">${label}</button>`;
+  }
+
+  _vehicleEntityRegex() {
+    return /^sensor\.([a-z0-9_]+)_(total_vehicle_cost|total_cost|last_fill_date|fuel_cost_this_month|odometer)$/i;
+  }
+
+  _slugToLabel(slug) {
+    return String(slug || "")
+      .split("_")
+      .filter(Boolean)
+      .map((part) => (part.length <= 3 ? part.toUpperCase() : part.charAt(0).toUpperCase() + part.slice(1)))
+      .join(" ");
+  }
+
+  _humanizeMetric(metric) {
+    return String(metric || "")
+      .split("_")
+      .filter(Boolean)
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(" ");
+  }
+
+  _fallbackVehicleLabelFromState(state, slug) {
+    const friendly = String(state?.attributes?.friendly_name || "").trim();
+    if (!friendly) {
+      return this._slugToLabel(slug);
+    }
+
+    const suffixes = [
+      "Total Vehicle Cost",
+      "Total Cost",
+      "Last Fill Date",
+      "Fuel Cost This Month",
+      "Odometer",
+      this._humanizeMetric(state?.entity_id?.split("_").slice(-3).join("_") || ""),
+    ].filter(Boolean);
+
+    for (const suffix of suffixes) {
+      if (friendly.endsWith(suffix)) {
+        const trimmed = friendly.slice(0, -suffix.length).trim();
+        if (trimmed) {
+          return trimmed;
+        }
+      }
+    }
+
+    return this._slugToLabel(slug);
+  }
+
+  _buildStateVehicleMap() {
+    const states = Object.values(this._hass?.states || {});
+    const vehicles = new Map();
+    const regex = this._vehicleEntityRegex();
+
+    for (const state of states) {
+      const entityId = state?.entity_id || "";
+      const match = entityId.match(regex);
+      if (!match) {
+        continue;
+      }
+
+      const slug = match[1];
+      if (!vehicles.has(slug)) {
+        vehicles.set(slug, {
+          value: slug,
+          label: this._fallbackVehicleLabelFromState(state, slug),
+        });
+      }
+    }
+
+    if (this._config.vehicle && !vehicles.has(this._config.vehicle)) {
+      vehicles.set(this._config.vehicle, {
+        value: this._config.vehicle,
+        label: this._slugToLabel(this._config.vehicle),
+      });
+    }
+
+    return vehicles;
+  }
+
+  async _loadVehicleCatalog() {
+    const stateVehicles = this._buildStateVehicleMap();
+    const stateKey = [...stateVehicles.keys()].sort().join("|");
+
+    if (!stateVehicles.size) {
+      if (this._vehicleCatalog.length) {
+        this._vehicleCatalog = [];
+        this._vehicleCatalogKey = "";
+        this._render();
+      }
+      return;
+    }
+
+    if (this._vehicleCatalogKey === stateKey && this._vehicleCatalog.length) {
+      return;
+    }
+
+    let catalog = [...stateVehicles.values()];
+    this._vehicleCatalogKey = stateKey;
+
+    try {
+      if (typeof this._hass?.callWS === "function") {
+        const regex = this._vehicleEntityRegex();
+        const [entityRegistry, deviceRegistry] = await Promise.all([
+          this._hass.callWS({ type: "config/entity_registry/list" }),
+          this._hass.callWS({ type: "config/device_registry/list" }),
+        ]);
+
+        if (this._vehicleCatalogKey !== stateKey) {
+          return;
+        }
+
+        const deviceMap = new Map(deviceRegistry.map((device) => [device.id, device]));
+
+        for (const entity of entityRegistry) {
+          const match = String(entity?.entity_id || "").match(regex);
+          if (!match) {
+            continue;
+          }
+
+          const slug = match[1];
+          const device = deviceMap.get(entity.device_id);
+          const label =
+            device?.name_by_user ||
+            device?.name ||
+            stateVehicles.get(slug)?.label ||
+            this._slugToLabel(slug);
+
+          stateVehicles.set(slug, { value: slug, label });
+        }
+
+        catalog = [...stateVehicles.values()];
+      }
+    } catch (_error) {
+      // Fall back to labels derived from entity states when registry access is unavailable.
+    }
+
+    catalog.sort((a, b) => a.label.localeCompare(b.label));
+    const nextSerialized = JSON.stringify(catalog);
+    const previousSerialized = JSON.stringify(this._vehicleCatalog);
+    if (nextSerialized !== previousSerialized) {
+      this._vehicleCatalog = catalog;
+      this._render();
+    } else {
+      this._vehicleCatalog = catalog;
+    }
+  }
+
+  _vehicleOptions() {
+    if (this._vehicleCatalog.length) {
+      return this._vehicleCatalog;
+    }
+    return [...this._buildStateVehicleMap().values()].sort((a, b) => a.label.localeCompare(b.label));
+  }
+
+  _renderTabContent() {
+    if (this._activeTab === "visibility") {
+      return `
+        <div class="stack">
+          ${this._toggle("Show expenses", "show_expenses", "Display service and non-fuel expense sections.")}
+          ${this._toggle("Show trips", "show_trips", "Display TripLog highlights and recent trips.")}
+          ${this._toggle("Show empty categories", "show_empty_categories", "Keep category cards visible even when their value is zero.")}
+          ${this._toggle("Show top header", "show_header", "Show the app-like title bar in the costs layout.")}
+          ${this._toggle("Dense mode", "dense_mode", "Use tighter spacing for dashboards with less room.")}
+        </div>
+      `;
+    }
+
+    if (this._activeTab === "style") {
+      return `
+        <div class="stack">
+          ${this._input("Accent color", "accent_color", "#88d24f")}
+          ${this._input("Card background (optional)", "card_background", "linear-gradient(...)")}
+          ${this._number("Border radius", "border_radius", 12, 48)}
+          <div class="hint">
+            Leave background empty to use the default app-inspired theme. Accent color is used for highlights,
+            metrics and category emphasis.
+          </div>
+        </div>
+      `;
+    }
+
+    const vehicleOptions = this._vehicleOptions();
+
+    return `
+      <div class="stack">
+        ${
+          vehicleOptions.length
+            ? this._select("Vehicle", "vehicle", vehicleOptions)
+            : `<div class="hint">No FuelinoHA vehicles were auto-detected yet.</div>`
+        }
+        ${this._input("Card title", "title", "My car")}
+        ${this._select("Layout", "layout", [
+          { value: "costs", label: "Costs" },
+          { value: "fuelio", label: "Fuelio Stats" },
+          { value: "compact", label: "Compact" },
+        ])}
+        ${this._select("Trend period", "trend_period", [
+          { value: "30d", label: "Last 30 days" },
+          { value: "90d", label: "Last 90 days" },
+          { value: "180d", label: "Last 180 days" },
+          { value: "365d", label: "Last year" },
+          { value: "all", label: "All data" },
+        ])}
+        <div class="hint">
+          Pick the detected vehicle from Home Assistant. The card will use the matching Fuelino sensors automatically.
+        </div>
+      </div>
+    `;
+  }
+
+  _attachEvents() {
+    this.shadowRoot.querySelectorAll("[data-tab]").forEach((button) => {
+      button.addEventListener("click", () => this._setTab(button.dataset.tab));
+    });
+
+    this.shadowRoot.querySelectorAll("input[data-key], select[data-key]").forEach((field) => {
+      const key = field.dataset.key;
+      const handler = () => {
+        if (field.type === "checkbox") {
+          this._setValue(key, field.checked);
+          return;
+        }
+        if (field.type === "number") {
+          const parsed = Number(field.value);
+          this._setValue(key, Number.isFinite(parsed) ? parsed : "");
+          return;
+        }
+        this._setValue(key, field.value.trim());
+      };
+
+      if (field.tagName === "SELECT" || field.type === "checkbox") {
+        field.addEventListener("change", handler);
+        return;
+      }
+
+      field.addEventListener("input", handler);
+      field.addEventListener("change", handler);
+    });
+
+    const preview = this.shadowRoot.querySelector("fuelino-card");
+    if (preview) {
+      preview.hass = this._hass;
+    }
+  }
+
+  _render() {
+    if (!this._config) {
+      return;
+    }
+
+    if (!this.shadowRoot) {
+      this.attachShadow({ mode: "open" });
+    }
+
+    this.shadowRoot.innerHTML = `
+      <style>
+        :host {
+          display: block;
+          color: var(--primary-text-color);
+        }
+
+        .editor {
+          display: grid;
+          grid-template-columns: minmax(320px, 420px) minmax(280px, 1fr);
+          gap: 20px;
+          align-items: start;
+        }
+
+        .panel,
+        .preview {
+          border-radius: 24px;
+          background: rgba(18, 24, 38, 0.9);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          padding: 20px;
+        }
+
+        .preview {
+          min-width: 0;
+          overflow: hidden;
+          position: relative;
+          isolation: isolate;
+        }
+
+        .panel__header {
+          display: grid;
+          gap: 4px;
+          margin-bottom: 18px;
+        }
+
+        .panel__eyebrow {
+          font-size: 0.78rem;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+          color: var(--secondary-text-color);
+        }
+
+        .panel__title {
+          font-size: 1.35rem;
+          font-weight: 700;
+        }
+
+        .tabs {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 10px;
+          margin-bottom: 18px;
+        }
+
+        .tab {
+          border: 0;
+          border-radius: 999px;
+          padding: 10px 14px;
+          background: rgba(255, 255, 255, 0.06);
+          color: inherit;
+          cursor: pointer;
+          font: inherit;
+        }
+
+        .tab.is-active {
+          background: rgba(255, 173, 96, 0.18);
+          color: #ffbf7a;
+        }
+
+        .stack {
+          display: grid;
+          gap: 14px;
+        }
+
+        .field {
+          display: grid;
+          gap: 8px;
+        }
+
+        .field__label,
+        .toggle__label {
+          font-size: 0.92rem;
+          font-weight: 600;
+        }
+
+        .field input,
+        .field select {
+          width: 100%;
+          box-sizing: border-box;
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          border-radius: 14px;
+          padding: 14px 16px;
+          background: rgba(255, 255, 255, 0.05);
+          color: inherit;
+          font: inherit;
+        }
+
+        .toggle {
+          display: flex;
+          justify-content: space-between;
+          gap: 16px;
+          align-items: center;
+          padding: 14px 16px;
+          border-radius: 16px;
+          background: rgba(255, 255, 255, 0.04);
+        }
+
+        .toggle__note,
+        .hint {
+          color: var(--secondary-text-color);
+          font-size: 0.86rem;
+          line-height: 1.45;
+        }
+
+        .toggle input {
+          width: 20px;
+          height: 20px;
+        }
+
+        .preview__title {
+          font-size: 0.92rem;
+          color: var(--secondary-text-color);
+          margin-bottom: 12px;
+        }
+
+        .preview__frame {
+          min-width: 0;
+          max-width: 100%;
+          overflow: hidden;
+          border-radius: 24px;
+        }
+
+        fuelino-card {
+          display: block;
+          width: 100%;
+          max-width: 100%;
+          min-width: 0;
+        }
+
+        @media (max-width: 920px) {
+          .editor {
+            grid-template-columns: 1fr;
+          }
+        }
+      </style>
+      <div class="editor">
+        <section class="panel">
+          <div class="panel__header">
+            <div class="panel__eyebrow">FuelinoHA Card</div>
+            <div class="panel__title">Card editor</div>
+          </div>
+          <div class="tabs">
+            ${this._tabButton("base", "Base")}
+            ${this._tabButton("visibility", "Visibility")}
+            ${this._tabButton("style", "Style")}
+          </div>
+          ${this._renderTabContent()}
+        </section>
+        <section class="preview">
+          <div class="preview__title">Live preview</div>
+          <div class="preview__frame">
+            <fuelino-card></fuelino-card>
+          </div>
+        </section>
+      </div>
+    `;
+
+    const preview = this.shadowRoot.querySelector("fuelino-card");
+    if (preview) {
+      preview.setConfig(this._config);
+      preview.hass = this._hass;
+    }
+
+    this._attachEvents();
+  }
+}
+
+if (!customElements.get(FUELINO_CARD_EDITOR_TAG)) {
+  customElements.define(FUELINO_CARD_EDITOR_TAG, FuelinoCardEditor);
+}
+
 class FuelinoCard extends HTMLElement {
   constructor() {
     super();
@@ -7,7 +570,6 @@ class FuelinoCard extends HTMLElement {
   }
 
   static async getConfigElement() {
-    await import("./fuelino-card-editor.js");
     return document.createElement("fuelino-card-editor");
   }
 

@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.3.24
+
+Follow-up release for `FuelinoHA Card`.
+
+### Highlights
+
+- fixed the visual editor loading in HACS installs after the previous release
+- embedded the card editor back into `fuelino-card.js` so card configuration no longer depends on loading a second JS module
+- kept the simpler vehicle selection flow without the manual `Vehicle slug` field
+
 ## v0.3.23
 
 Follow-up release for `FuelinoHA Card`.
