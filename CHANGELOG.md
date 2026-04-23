@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.3.41
+
+Follow-up release for `FuelinoHA Card`.
+
+### Highlights
+
+- uses the new FuelinoHA `vehicle_prefix` helper sensors as the primary source for the vehicle picker
+- stops guessing vehicle options from unrelated Home Assistant devices when helper sensors are available
+- keeps legacy sensor scanning as a fallback for older FuelinoHA versions
+
 ## v0.3.40
 
 Hotfix release for `FuelinoHA Card`.

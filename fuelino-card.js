@@ -140,6 +140,7 @@ class FuelinoCardEditor extends HTMLElement {
 
   _vehicleSensorSuffixes() {
     return [
+      "vehicle_prefix",
       "last_fill_date",
       "days_since_fill",
       "last_fill_volume",
@@ -313,6 +314,11 @@ class FuelinoCardEditor extends HTMLElement {
 
   _vehicleStateMap() {
     const states = Object.values(this._hass?.states || {});
+    const helperVehicles = this._vehicleHelperStateMap(states);
+    if (helperVehicles.size) {
+      return helperVehicles;
+    }
+
     const vehicles = new Map();
     const regex = this._vehicleEntityRegex();
 
@@ -341,6 +347,32 @@ class FuelinoCardEditor extends HTMLElement {
       ) {
         vehicles.set(slug, state);
       }
+    }
+
+    return vehicles;
+  }
+
+  _vehicleHelperStateMap(states = Object.values(this._hass?.states || {})) {
+    const vehicles = new Map();
+
+    for (const state of states) {
+      const entityId = String(state?.entity_id || "");
+      const attrs = state?.attributes || {};
+      const isVehicleHelper =
+        attrs.fuelino_vehicle_helper === true ||
+        entityId.endsWith("_vehicle_prefix");
+      if (!isVehicleHelper) {
+        continue;
+      }
+
+      const slug = String(attrs.vehicle_key || attrs.sensor_prefix || state?.state || "")
+        .trim()
+        .toLowerCase();
+      if (!slug) {
+        continue;
+      }
+
+      vehicles.set(slug, state);
     }
 
     return vehicles;
@@ -829,6 +861,7 @@ class FuelinoCard extends HTMLElement {
 
   _vehicleSensorSuffixes() {
     return [
+      "vehicle_prefix",
       "last_fill_date",
       "days_since_fill",
       "last_fill_volume",
@@ -1002,6 +1035,11 @@ class FuelinoCard extends HTMLElement {
 
   _vehicleStateMap() {
     const states = Object.values(this._hass?.states || {});
+    const helperVehicles = this._vehicleHelperStateMap(states);
+    if (helperVehicles.size) {
+      return helperVehicles;
+    }
+
     const vehicles = new Map();
     const regex = this._vehicleEntityRegex();
 
@@ -1030,6 +1068,32 @@ class FuelinoCard extends HTMLElement {
       ) {
         vehicles.set(slug, state);
       }
+    }
+
+    return vehicles;
+  }
+
+  _vehicleHelperStateMap(states = Object.values(this._hass?.states || {})) {
+    const vehicles = new Map();
+
+    for (const state of states) {
+      const entityId = String(state?.entity_id || "");
+      const attrs = state?.attributes || {};
+      const isVehicleHelper =
+        attrs.fuelino_vehicle_helper === true ||
+        entityId.endsWith("_vehicle_prefix");
+      if (!isVehicleHelper) {
+        continue;
+      }
+
+      const slug = String(attrs.vehicle_key || attrs.sensor_prefix || state?.state || "")
+        .trim()
+        .toLowerCase();
+      if (!slug) {
+        continue;
+      }
+
+      vehicles.set(slug, state);
     }
 
     return vehicles;
