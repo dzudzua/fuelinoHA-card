@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.3.48
+
+Hotfix release for `FuelinoHA Card`.
+
+### Highlights
+
+- hides the in-card vehicle switcher when the card has a specific vehicle selected in configuration
+- prevents the header from showing the selected car while the small switcher chip shows the other car
+- keeps automatic multi-car switching available only for cards without a fixed vehicle value
+
 ## v0.3.47
 
 Feature release for `FuelinoHA Card`.

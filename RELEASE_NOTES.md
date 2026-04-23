@@ -1,12 +1,12 @@
-# FuelinoHA Card v0.3.47
+# FuelinoHA Card v0.3.48
 
-Feature release focused on chart visibility controls.
+Hotfix release focused on fixed-vehicle cards.
 
-## What's New
+## Fixed
 
-- The visual editor now includes a `Grafy` checkbox for showing or hiding the Fuelio trend chart carousel.
-- The card now supports the matching `show_charts` config option.
-- Existing cards keep charts visible by default.
+- The in-card vehicle switcher is now hidden when the card has a specific vehicle selected in configuration.
+- This prevents the card header from showing one car while the small switcher chip below it shows the other car.
+- Cards without a fixed vehicle value can still use automatic multi-car switching.
 
 ## Upgrade Notes
 

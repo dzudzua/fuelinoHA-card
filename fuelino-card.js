@@ -1312,6 +1312,10 @@ class FuelinoCard extends HTMLElement {
   }
 
   _vehicleSwitcher() {
+    if (String(this._config?.vehicle || "").trim()) {
+      return "";
+    }
+
     const vehicles = this._vehicleRecords();
     if (vehicles.length < 2) {
       return "";
