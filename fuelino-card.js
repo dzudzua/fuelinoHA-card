@@ -139,7 +139,7 @@ class FuelinoCardEditor extends HTMLElement {
   }
 
   _vehicleSensorSuffixes() {
-    return [
+    const suffixes = [
       "vehicle_prefix",
       "last_fill_date",
       "days_since_fill",
@@ -210,6 +210,90 @@ class FuelinoCardEditor extends HTMLElement {
       "source_file_name",
       "source_reference",
     ];
+    return [...new Set([...suffixes, ...Object.values(this._vehicleSensorSuffixAliases()).flat()])];
+  }
+
+  _vehicleSensorSuffixAliases() {
+    return {
+      vehicle_prefix: ["prefix_senzoru_vozidla"],
+      last_fill_date: ["datum_posledniho_tankovani"],
+      days_since_fill: ["dnu_od_tankovani"],
+      last_fill_volume: ["posledni_objem_tankovani"],
+      last_fill_cost: ["cena_posledniho_tankovani"],
+      last_price_per_unit: ["posledni_cena_za_jednotku"],
+      last_consumption: ["posledni_spotreba"],
+      last_city: ["posledni_mesto"],
+      favorite_station: ["nejcastejsi_pumpa"],
+      favorite_city: ["nejcastejsi_mesto"],
+      favorite_station_id: ["nejcastejsi_id_pumpy"],
+      odometer: ["tachometr"],
+      distance_since_previous_fill: ["vzdalenost_od_minuleho_tankovani"],
+      tracked_distance: ["sledovana_vzdalenost"],
+      fill_count: ["pocet_tankovani"],
+      fuel_cost_this_month: ["naklady_na_palivo_tento_mesic"],
+      last_expense_date: ["datum_posledniho_vydaje"],
+      last_expense_cost: ["cena_posledniho_vydaje"],
+      expense_count: ["pocet_vydaju"],
+      expense_cost_this_month: ["vydaje_tento_mesic"],
+      total_expense_cost: ["celkove_ostatni_vydaje"],
+      total_vehicle_cost: ["celkove_naklady_auta"],
+      service_cost_total: ["celkem_servis_a_udrzba"],
+      wash_cost_total: ["celkem_myti"],
+      registration_cost_total: ["celkem_registrace"],
+      parking_cost_total: ["celkem_parkovani"],
+      toll_cost_total: ["celkem_mytne"],
+      insurance_cost_total: ["celkem_pojisteni"],
+      last_service_date: ["datum_posledniho_servisu"],
+      last_service_cost: ["cena_posledniho_servisu"],
+      top_expense_category: ["nejvetsi_kategorie_vydaju"],
+      fill_count_30d: ["pocet_tankovani_za_30_dni"],
+      total_cost: ["celkove_naklady"],
+      total_volume: ["celkovy_objem"],
+      average_price: ["prumerna_cena"],
+      average_price_5_fills: ["prumerna_cena_za_poslednich_5_tankovani"],
+      average_consumption: ["prumerna_spotreba"],
+      best_consumption: ["nejlepsi_spotreba"],
+      worst_consumption: ["nejhorsi_spotreba"],
+      average_consumption_30d: ["prumerna_spotreba_za_30_dni"],
+      average_cost_per_km: ["prumerna_cena_za_vzdalenost"],
+      average_fill_volume: ["prumerny_objem_tankovani"],
+      average_days_between_fills: ["prumer_dnu_mezi_tankovanimi"],
+      average_distance_between_fills: ["prumerna_vzdalenost_mezi_tankovanimi"],
+      distance_this_month: ["vzdalenost_tento_mesic"],
+      last_month_cost: ["naklady_minuly_mesic"],
+      last_month_average_consumption: ["prumerna_spotreba_minuly_mesic"],
+      last_month_fill_count: ["pocet_tankovani_minuly_mesic"],
+      last_month_average_price: ["prumerna_cena_minuly_mesic"],
+      month_over_month_cost_delta: ["rozdil_nakladu_proti_minulemu_mesici"],
+      fuel_price_trend: ["trend_ceny_paliva"],
+      days_since_full_tank: ["dnu_od_plne_nadrze"],
+      km_since_full_tank: ["vzdalenost_od_plne_nadrze"],
+      lowest_price_per_unit: ["nejnizsi_cena_za_jednotku"],
+      highest_price_per_unit: ["nejvyssi_cena_za_jednotku"],
+      different_stations_count: ["pocet_ruznych_pump"],
+      different_cities_count: ["pocet_ruznych_mest"],
+      last_trip_date: ["datum_posledni_jizdy"],
+      last_trip_distance: ["vzdalenost_posledni_jizdy"],
+      last_trip_cost: ["cena_posledni_jizdy"],
+      trip_count: ["pocet_jizd"],
+      total_trip_distance: ["celkova_vzdalenost_jizd"],
+      average_trip_cost_per_km: ["prumerna_cena_jizdy_za_vzdalenost"],
+      source_file_name: ["nazev_zdrojoveho_souboru"],
+      source_reference: ["zdrojovy_odkaz_nebo_cesta"],
+    };
+  }
+
+  _canonicalSensorKey(suffix) {
+    const value = String(suffix || "").trim();
+    if (!value) {
+      return "";
+    }
+    for (const [canonical, aliases] of Object.entries(this._vehicleSensorSuffixAliases())) {
+      if (canonical === value || aliases.includes(value)) {
+        return canonical;
+      }
+    }
+    return value;
   }
 
   _slugToLabel(slug) {
@@ -860,7 +944,7 @@ class FuelinoCard extends HTMLElement {
   }
 
   _vehicleSensorSuffixes() {
-    return [
+    const suffixes = [
       "vehicle_prefix",
       "last_fill_date",
       "days_since_fill",
@@ -931,6 +1015,90 @@ class FuelinoCard extends HTMLElement {
       "source_file_name",
       "source_reference",
     ];
+    return [...new Set([...suffixes, ...Object.values(this._vehicleSensorSuffixAliases()).flat()])];
+  }
+
+  _vehicleSensorSuffixAliases() {
+    return {
+      vehicle_prefix: ["prefix_senzoru_vozidla"],
+      last_fill_date: ["datum_posledniho_tankovani"],
+      days_since_fill: ["dnu_od_tankovani"],
+      last_fill_volume: ["posledni_objem_tankovani"],
+      last_fill_cost: ["cena_posledniho_tankovani"],
+      last_price_per_unit: ["posledni_cena_za_jednotku"],
+      last_consumption: ["posledni_spotreba"],
+      last_city: ["posledni_mesto"],
+      favorite_station: ["nejcastejsi_pumpa"],
+      favorite_city: ["nejcastejsi_mesto"],
+      favorite_station_id: ["nejcastejsi_id_pumpy"],
+      odometer: ["tachometr"],
+      distance_since_previous_fill: ["vzdalenost_od_minuleho_tankovani"],
+      tracked_distance: ["sledovana_vzdalenost"],
+      fill_count: ["pocet_tankovani"],
+      fuel_cost_this_month: ["naklady_na_palivo_tento_mesic"],
+      last_expense_date: ["datum_posledniho_vydaje"],
+      last_expense_cost: ["cena_posledniho_vydaje"],
+      expense_count: ["pocet_vydaju"],
+      expense_cost_this_month: ["vydaje_tento_mesic"],
+      total_expense_cost: ["celkove_ostatni_vydaje"],
+      total_vehicle_cost: ["celkove_naklady_auta"],
+      service_cost_total: ["celkem_servis_a_udrzba"],
+      wash_cost_total: ["celkem_myti"],
+      registration_cost_total: ["celkem_registrace"],
+      parking_cost_total: ["celkem_parkovani"],
+      toll_cost_total: ["celkem_mytne"],
+      insurance_cost_total: ["celkem_pojisteni"],
+      last_service_date: ["datum_posledniho_servisu"],
+      last_service_cost: ["cena_posledniho_servisu"],
+      top_expense_category: ["nejvetsi_kategorie_vydaju"],
+      fill_count_30d: ["pocet_tankovani_za_30_dni"],
+      total_cost: ["celkove_naklady"],
+      total_volume: ["celkovy_objem"],
+      average_price: ["prumerna_cena"],
+      average_price_5_fills: ["prumerna_cena_za_poslednich_5_tankovani"],
+      average_consumption: ["prumerna_spotreba"],
+      best_consumption: ["nejlepsi_spotreba"],
+      worst_consumption: ["nejhorsi_spotreba"],
+      average_consumption_30d: ["prumerna_spotreba_za_30_dni"],
+      average_cost_per_km: ["prumerna_cena_za_vzdalenost"],
+      average_fill_volume: ["prumerny_objem_tankovani"],
+      average_days_between_fills: ["prumer_dnu_mezi_tankovanimi"],
+      average_distance_between_fills: ["prumerna_vzdalenost_mezi_tankovanimi"],
+      distance_this_month: ["vzdalenost_tento_mesic"],
+      last_month_cost: ["naklady_minuly_mesic"],
+      last_month_average_consumption: ["prumerna_spotreba_minuly_mesic"],
+      last_month_fill_count: ["pocet_tankovani_minuly_mesic"],
+      last_month_average_price: ["prumerna_cena_minuly_mesic"],
+      month_over_month_cost_delta: ["rozdil_nakladu_proti_minulemu_mesici"],
+      fuel_price_trend: ["trend_ceny_paliva"],
+      days_since_full_tank: ["dnu_od_plne_nadrze"],
+      km_since_full_tank: ["vzdalenost_od_plne_nadrze"],
+      lowest_price_per_unit: ["nejnizsi_cena_za_jednotku"],
+      highest_price_per_unit: ["nejvyssi_cena_za_jednotku"],
+      different_stations_count: ["pocet_ruznych_pump"],
+      different_cities_count: ["pocet_ruznych_mest"],
+      last_trip_date: ["datum_posledni_jizdy"],
+      last_trip_distance: ["vzdalenost_posledni_jizdy"],
+      last_trip_cost: ["cena_posledni_jizdy"],
+      trip_count: ["pocet_jizd"],
+      total_trip_distance: ["celkova_vzdalenost_jizd"],
+      average_trip_cost_per_km: ["prumerna_cena_jizdy_za_vzdalenost"],
+      source_file_name: ["nazev_zdrojoveho_souboru"],
+      source_reference: ["zdrojovy_odkaz_nebo_cesta"],
+    };
+  }
+
+  _canonicalSensorKey(suffix) {
+    const value = String(suffix || "").trim();
+    if (!value) {
+      return "";
+    }
+    for (const [canonical, aliases] of Object.entries(this._vehicleSensorSuffixAliases())) {
+      if (canonical === value || aliases.includes(value)) {
+        return canonical;
+      }
+    }
+    return value;
   }
 
   _slugToLabel(slug) {
@@ -1251,7 +1419,9 @@ class FuelinoCard extends HTMLElement {
       const attrSensorKey = String(attrs.sensor_key || "").trim();
       const match = entityId.match(regex);
       const stateVehicle = attrVehicleKey || match?.[1] || "";
-      const stateSuffix = attrSensorKey || match?.[2] || (entityId.endsWith(`_${suffix}`) ? suffix : "");
+      const stateSuffix = this._canonicalSensorKey(
+        attrSensorKey || match?.[2] || (entityId.endsWith(`_${suffix}`) ? suffix : "")
+      );
       if (stateVehicle === vehicle && stateSuffix === suffix) {
         return state;
       }

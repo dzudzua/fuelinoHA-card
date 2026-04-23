@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.3.43
+
+Hotfix release for `FuelinoHA Card`.
+
+### Highlights
+
+- added Czech localized entity-id suffix aliases such as `celkove_naklady`
+- lets the card resolve sensors like `sensor.rychly_cerveny_celkove_naklady` as `total_cost`
+- keeps `sensor_key` attributes as the preferred lookup path when FuelinoHA is fully updated
+
 ## v0.3.42
 
 Hotfix release for `FuelinoHA Card`.
