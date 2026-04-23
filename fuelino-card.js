@@ -249,7 +249,10 @@ class FuelinoCardEditor extends HTMLElement {
         continue;
       }
 
-      const slug = match[1];
+      const slug = String(state?.attributes?.vehicle_key || match[1] || "").trim();
+      if (!slug) {
+        continue;
+      }
       if (!vehicles.has(slug)) {
         vehicles.set(slug, {
           value: slug,
@@ -319,7 +322,10 @@ class FuelinoCardEditor extends HTMLElement {
             continue;
           }
 
-          const slug = match[1];
+          const slug = String(match[1] || "").trim();
+          if (!slug) {
+            continue;
+          }
           const device = deviceMap.get(entity.device_id);
           const isFuelinoVehicleDevice =
             String(device?.manufacturer || "").trim().toLowerCase() === "fuelio" &&
@@ -841,7 +847,10 @@ class FuelinoCard extends HTMLElement {
         continue;
       }
 
-      const slug = match[1];
+      const slug = String(state?.attributes?.vehicle_key || match[1] || "").trim();
+      if (!slug) {
+        continue;
+      }
       if (!vehicles.has(slug)) {
         vehicles.set(slug, {
           slug,

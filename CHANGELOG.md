@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.3.37
+
+Follow-up release for `FuelinoHA Card`.
+
+### Highlights
+
+- updated vehicle detection to group cars by FuelinoHA `vehicle_key` sensor attributes
+- improves multi-car detection when Home Assistant registry metadata is incomplete
+- restores missing secondary vehicles in the card editor picker
+
 ## v0.3.36
 
 Follow-up release for `FuelinoHA Card`.
