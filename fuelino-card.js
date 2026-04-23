@@ -251,7 +251,17 @@ class FuelinoCardEditor extends HTMLElement {
       }
     }
 
-    if (this._config.vehicle && !vehicles.has(this._config.vehicle)) {
+    const configuredVehicle = String(this._config.vehicle || "").trim();
+    const configuredMatchesDetected = [...vehicles.values()].some((vehicle) => {
+      const normalizedConfigured = this._normalizedVehicleValue(configuredVehicle);
+      return (
+        vehicle.value === configuredVehicle ||
+        this._normalizedVehicleValue(vehicle.label) === normalizedConfigured ||
+        this._normalizedVehicleValue(this._slugToLabel(vehicle.value)) === normalizedConfigured
+      );
+    });
+
+    if (configuredVehicle && !vehicles.size && !vehicles.has(configuredVehicle) && !configuredMatchesDetected) {
       vehicles.set(this._config.vehicle, {
         value: this._config.vehicle,
         label: this._slugToLabel(this._config.vehicle),

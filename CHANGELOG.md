@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.3.34
+
+Follow-up release for `FuelinoHA Card`.
+
+### Highlights
+
+- fixed stale saved vehicle values showing up as extra options in the editor
+- prevents old labels such as `Poco` from being injected into the vehicle dropdown when real cars are already detected
+- keeps compatibility with manual values only when no detected vehicles are available
+
 ## v0.3.33
 
 Follow-up release for `FuelinoHA Card`.
