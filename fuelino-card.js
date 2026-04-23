@@ -2413,8 +2413,6 @@ class FuelinoCard extends HTMLElement {
               : ""
           }
 
-          ${this._topPanel()}
-
           ${showFuel || showCosts ? `
           <section class="section-chipline">
             <div class="fuelio-chip"><ha-icon icon="mdi:chart-box-outline"></ha-icon><span>Souhrn</span></div>
@@ -3196,6 +3194,12 @@ class FuelinoCard extends HTMLElement {
         .summary-card,
         .cost-card,
         .hero-stat-card,
+        .compact-panel,
+        .fuelio-panel,
+        .fuelio-fuelcard,
+        .fuelio-costgrid .fuelio-costblock,
+        .fuelio-statrow,
+        .fuelio-tripcell,
         .garage-panel,
         .garage-hero__copy,
         .garage-hero__stats {
@@ -3370,7 +3374,7 @@ class FuelinoCard extends HTMLElement {
 
         .summary-card,
         .cost-card {
-          padding: ${this._config.dense_mode ? 18 : 22}px;
+          padding: 20px;
         }
 
         .summary-card__divider,
@@ -3559,10 +3563,6 @@ class FuelinoCard extends HTMLElement {
         }
 
         .compact-panel {
-          background: var(--card-olive-panel);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          backdrop-filter: blur(10px);
-          border-radius: 28px;
           padding: 20px;
           display: grid;
           gap: 14px;
@@ -3618,9 +3618,7 @@ class FuelinoCard extends HTMLElement {
           --fuelio-muted: var(--card-muted);
           --fuelio-line: color-mix(in srgb, var(--accent) 78%, white);
           --fuelio-down: var(--card-red);
-          background:
-            radial-gradient(circle at top right, color-mix(in srgb, var(--accent) 50%, transparent), transparent 38%),
-            linear-gradient(145deg, var(--fuelio-bg) 0%, var(--fuelio-bg-mid) 45%, var(--fuelio-bg-deep) 100%);
+          background: ${background};
           color: var(--fuelio-text);
           padding: 22px;
           display: grid;
@@ -3804,9 +3802,6 @@ class FuelinoCard extends HTMLElement {
           display: grid;
           gap: 4px;
           padding: 10px 12px;
-          border-radius: 16px;
-          background: var(--fuelio-panel-strong);
-          border: 1px solid rgba(255, 255, 255, 0.08);
           min-width: 0;
         }
 
@@ -3853,9 +3848,6 @@ class FuelinoCard extends HTMLElement {
 
         .fuelio-costgrid .fuelio-costblock {
           padding: 18px;
-          border-radius: 22px;
-          background: var(--fuelio-panel-strong);
-          border: 1px solid rgba(255, 255, 255, 0.06);
         }
 
         .fuelio-panel > .fuelio-costblock + .fuelio-costblock {
@@ -3879,8 +3871,6 @@ class FuelinoCard extends HTMLElement {
           align-items: start;
           border-radius: 16px;
           padding: 10px 12px;
-          background: var(--fuelio-panel-strong);
-          border: 1px solid rgba(255, 255, 255, 0.08);
           min-width: 0;
         }
 
@@ -4123,9 +4113,6 @@ class FuelinoCard extends HTMLElement {
           display: grid;
           gap: 4px;
           padding: 10px 12px;
-          border-radius: 16px;
-          background: var(--fuelio-panel-strong);
-          border: 1px solid rgba(255, 255, 255, 0.08);
           min-width: 0;
         }
 

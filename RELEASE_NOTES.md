@@ -1,12 +1,12 @@
-# FuelinoHA Card v0.3.51
+# FuelinoHA Card v0.3.52
 
-Design release focused on visual consistency across layouts.
+Design release focused on stronger visual consistency across layouts.
 
 ## Changed
 
-- The compact layout's labeled metric-block style now extends to the Fuelio and Costs layouts.
-- Fuel, cost, trip, summary, and category stats now use a more consistent label-first pattern.
-- Metric grids now collapse more cleanly on narrow cards.
+- The separate Costs hero illustration has been removed so the Costs layout follows the same structure as the other layouts.
+- Fuelio, Costs, and Compact now use the same background treatment.
+- Compact metrics, Fuelio metrics, trip cells, cost blocks, and Costs summary cards now share one panel surface style.
 
 ## Upgrade Notes
 

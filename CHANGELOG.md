@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.3.52
+
+Design release for `FuelinoHA Card`.
+
+### Highlights
+
+- removes the separate Costs hero illustration so the Costs layout follows the same card structure as the other layouts
+- gives Fuelio, Costs, and Compact the same background treatment
+- shares one panel surface style across compact metrics, Fuelio metrics, trip cells, cost blocks, and Costs summary cards
+- reduces the remaining visual mismatch between layouts
+
 ## v0.3.51
 
 Design release for `FuelinoHA Card`.
