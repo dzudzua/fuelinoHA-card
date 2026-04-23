@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.3.39
+
+Follow-up release for `FuelinoHA Card`.
+
+### Highlights
+
+- rebuilt vehicle detection to primarily use FuelinoHA `vehicle_key` sensor attributes instead of depending on specific entity-id suffixes
+- improves multi-car picker reliability when one vehicle has a slightly different set of available sensors
+- prefers sensor states with explicit `vehicle_name` values so picker labels stay aligned with FuelinoHA vehicle devices
+- keeps legacy entity-id pattern matching only as a fallback for older FuelinoHA versions
+
 ## v0.3.38
 
 Follow-up release for `FuelinoHA Card`.

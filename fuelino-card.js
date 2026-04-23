@@ -237,22 +237,44 @@ class FuelinoCardEditor extends HTMLElement {
       .replace(/[^a-z0-9]+/g, " ");
   }
 
-  _buildStateVehicleMap() {
+  _vehicleStateMap() {
     const states = Object.values(this._hass?.states || {});
     const vehicles = new Map();
     const regex = this._vehicleEntityRegex();
 
     for (const state of states) {
-      const entityId = state?.entity_id || "";
-      const match = entityId.match(regex);
-      if (!match) {
-        continue;
-      }
-
-      const slug = String(state?.attributes?.vehicle_key || match[1] || "").trim();
+      const entityId = String(state?.entity_id || "");
+      const attrVehicleKey = String(state?.attributes?.vehicle_key || "").trim();
+      const regexMatch = entityId.match(regex);
+      const slug = attrVehicleKey || regexMatch?.[1] || "";
       if (!slug) {
         continue;
       }
+
+      if (!vehicles.has(slug)) {
+        vehicles.set(slug, state);
+        continue;
+      }
+
+      const existing = vehicles.get(slug);
+      const existingHasVehicleKey = Boolean(existing?.attributes?.vehicle_key);
+      const existingHasVehicleName = Boolean(existing?.attributes?.vehicle_name);
+      const currentHasVehicleKey = Boolean(attrVehicleKey);
+      const currentHasVehicleName = Boolean(state?.attributes?.vehicle_name);
+      if (
+        (!existingHasVehicleKey && currentHasVehicleKey) ||
+        (existingHasVehicleKey === currentHasVehicleKey && !existingHasVehicleName && currentHasVehicleName)
+      ) {
+        vehicles.set(slug, state);
+      }
+    }
+
+    return vehicles;
+  }
+
+  _buildStateVehicleMap() {
+    const vehicles = new Map();
+    for (const [slug, state] of this._vehicleStateMap()) {
       if (!vehicles.has(slug)) {
         vehicles.set(slug, {
           value: slug,
@@ -303,7 +325,7 @@ class FuelinoCardEditor extends HTMLElement {
 
     try {
       if (typeof this._hass?.callWS === "function") {
-        const regex = this._vehicleEntityRegex();
+        const vehicleStates = this._vehicleStateMap();
         const [entityRegistry, deviceRegistry] = await Promise.all([
           this._hass.callWS({ type: "config/entity_registry/list" }),
           this._hass.callWS({ type: "config/device_registry/list" }),
@@ -317,13 +339,10 @@ class FuelinoCardEditor extends HTMLElement {
         const mergedVehicles = new Map(stateVehicles);
 
         for (const entity of entityRegistry) {
-          const match = String(entity?.entity_id || "").match(regex);
-          if (!match) {
-            continue;
-          }
-
-          const slug = String(match[1] || "").trim();
-          if (!slug) {
+          const entityId = String(entity?.entity_id || "");
+          const state = this._hass?.states?.[entityId];
+          const slug = String(state?.attributes?.vehicle_key || "").trim();
+          if (!slug || !vehicleStates.has(slug)) {
             continue;
           }
           const device = deviceMap.get(entity.device_id);
@@ -834,21 +853,44 @@ class FuelinoCard extends HTMLElement {
       .replace(/[^a-z0-9]+/g, " ");
   }
 
-  _vehicleRecords() {
+  _vehicleStateMap() {
     const states = Object.values(this._hass?.states || {});
     const vehicles = new Map();
     const regex = this._vehicleEntityRegex();
 
     for (const state of states) {
-      const match = String(state?.entity_id || "").match(regex);
-      if (!match) {
-        continue;
-      }
-
-      const slug = String(state?.attributes?.vehicle_key || match[1] || "").trim();
+      const entityId = String(state?.entity_id || "");
+      const attrVehicleKey = String(state?.attributes?.vehicle_key || "").trim();
+      const regexMatch = entityId.match(regex);
+      const slug = attrVehicleKey || regexMatch?.[1] || "";
       if (!slug) {
         continue;
       }
+
+      if (!vehicles.has(slug)) {
+        vehicles.set(slug, state);
+        continue;
+      }
+
+      const existing = vehicles.get(slug);
+      const existingHasVehicleKey = Boolean(existing?.attributes?.vehicle_key);
+      const existingHasVehicleName = Boolean(existing?.attributes?.vehicle_name);
+      const currentHasVehicleKey = Boolean(attrVehicleKey);
+      const currentHasVehicleName = Boolean(state?.attributes?.vehicle_name);
+      if (
+        (!existingHasVehicleKey && currentHasVehicleKey) ||
+        (existingHasVehicleKey === currentHasVehicleKey && !existingHasVehicleName && currentHasVehicleName)
+      ) {
+        vehicles.set(slug, state);
+      }
+    }
+
+    return vehicles;
+  }
+
+  _vehicleRecords() {
+    const vehicles = new Map();
+    for (const [slug, state] of this._vehicleStateMap()) {
       if (!vehicles.has(slug)) {
         vehicles.set(slug, {
           slug,
