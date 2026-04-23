@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.3.49
+
+Hotfix release for `FuelinoHA Card`.
+
+### Highlights
+
+- removes the confusing `Card title` field from the visual editor
+- keeps existing YAML `title` values working as a legacy fallback
+- updates the README example and options list to focus on vehicle-based titles
+
 ## v0.3.48
 
 Hotfix release for `FuelinoHA Card`.

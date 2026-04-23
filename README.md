@@ -67,7 +67,6 @@ type: module
 ```yaml
 type: custom:fuelino-card
 vehicle: My car
-title: My car
 layout: fuelio
 trend_period: 180d
 ```
@@ -75,7 +74,6 @@ trend_period: 180d
 Supported options:
 
 - `vehicle`: detected Home Assistant vehicle name from the editor; legacy Fuelino slug values still work
-- `title`: optional title override
 - `layout`: `costs`, `fuelio`, or `compact`
 - `trend_period`: `30d`, `90d`, `180d`, `365d`, or `all`
 - `accent_color`: optional CSS color for the main accent

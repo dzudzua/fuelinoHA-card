@@ -615,7 +615,6 @@ class FuelinoCardEditor extends HTMLElement {
             ? this._select("Vehicle", "vehicle", vehicleOptions)
             : `<div class="hint">No FuelinoHA vehicles were auto-detected yet.</div>`
         }
-        ${this._input("Card title", "title", "My car")}
         ${this._select("Layout", "layout", [
           { value: "costs", label: "Costs" },
           { value: "fuelio", label: "Fuelio Stats" },

@@ -1,12 +1,12 @@
-# FuelinoHA Card v0.3.48
+# FuelinoHA Card v0.3.49
 
-Hotfix release focused on fixed-vehicle cards.
+Hotfix release focused on simplifying the visual editor.
 
 ## Fixed
 
-- The in-card vehicle switcher is now hidden when the card has a specific vehicle selected in configuration.
-- This prevents the card header from showing one car while the small switcher chip below it shows the other car.
-- Cards without a fixed vehicle value can still use automatic multi-car switching.
+- The `Card title` field has been removed from the visual editor because the card already uses the selected vehicle name.
+- Existing YAML configs that still define `title` continue to work as a legacy fallback.
+- The README example and option list now match the simplified editor.
 
 ## Upgrade Notes
 
