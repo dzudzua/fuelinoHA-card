@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.3.38
+
+Follow-up release for `FuelinoHA Card`.
+
+### Highlights
+
+- fixed the vehicle picker so partially registered multi-car setups still show every detected car
+- Home Assistant registry data now only improves labels and no longer hides valid vehicles from sensor data
+- keeps unrelated devices filtered out without dropping a real secondary car
+
 ## v0.3.37
 
 Follow-up release for `FuelinoHA Card`.
