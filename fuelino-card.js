@@ -134,7 +134,81 @@ class FuelinoCardEditor extends HTMLElement {
   }
 
   _vehicleEntityRegex() {
-    return /^sensor\.([a-z0-9_]+)_(total_vehicle_cost|total_cost|last_fill_date|fuel_cost_this_month|odometer)$/i;
+    const suffixPattern = this._vehicleSensorSuffixes().join("|");
+    return new RegExp(`^sensor\\.([a-z0-9_]+)_(${suffixPattern})$`, "i");
+  }
+
+  _vehicleSensorSuffixes() {
+    return [
+      "last_fill_date",
+      "days_since_fill",
+      "last_fill_volume",
+      "last_fill_cost",
+      "last_price_per_unit",
+      "last_consumption",
+      "last_fill_temperature",
+      "last_city",
+      "favorite_station",
+      "favorite_city",
+      "favorite_station_id",
+      "odometer",
+      "distance_since_previous_fill",
+      "tracked_distance",
+      "fill_count",
+      "cost_30d",
+      "fuel_cost_this_month",
+      "last_expense_date",
+      "last_expense_cost",
+      "expense_count",
+      "expense_cost_this_month",
+      "total_expense_cost",
+      "total_vehicle_cost",
+      "service_cost_total",
+      "wash_cost_total",
+      "registration_cost_total",
+      "parking_cost_total",
+      "toll_cost_total",
+      "insurance_cost_total",
+      "last_service_date",
+      "last_service_cost",
+      "top_expense_category",
+      "fill_count_30d",
+      "total_cost",
+      "most_expensive_fill",
+      "least_expensive_fill",
+      "total_volume",
+      "average_price",
+      "average_price_5_fills",
+      "average_consumption",
+      "best_consumption",
+      "worst_consumption",
+      "average_consumption_30d",
+      "average_cost_per_km",
+      "average_fill_volume",
+      "average_days_between_fills",
+      "average_distance_between_fills",
+      "distance_this_month",
+      "last_month_cost",
+      "last_month_average_consumption",
+      "last_month_fill_count",
+      "last_month_average_price",
+      "month_over_month_cost_delta",
+      "fuel_price_trend",
+      "days_since_full_tank",
+      "km_since_full_tank",
+      "lowest_price_per_unit",
+      "highest_price_per_unit",
+      "different_stations_count",
+      "different_cities_count",
+      "last_trip_date",
+      "last_trip_distance",
+      "last_trip_cost",
+      "trip_count",
+      "total_trip_distance",
+      "average_trip_cost_per_km",
+      "source_file_name",
+      "source_reference",
+    ];
   }
 
   _slugToLabel(slug) {
@@ -749,8 +823,81 @@ class FuelinoCard extends HTMLElement {
   }
 
   _vehicleEntityRegex() {
-    const suffixPattern = "(total_vehicle_cost|total_cost|last_fill_date|fuel_cost_this_month|odometer)";
-    return new RegExp(`^sensor\\.([a-z0-9_]+)_${suffixPattern}$`, "i");
+    const suffixPattern = this._vehicleSensorSuffixes().join("|");
+    return new RegExp(`^sensor\\.([a-z0-9_]+)_(${suffixPattern})$`, "i");
+  }
+
+  _vehicleSensorSuffixes() {
+    return [
+      "last_fill_date",
+      "days_since_fill",
+      "last_fill_volume",
+      "last_fill_cost",
+      "last_price_per_unit",
+      "last_consumption",
+      "last_fill_temperature",
+      "last_city",
+      "favorite_station",
+      "favorite_city",
+      "favorite_station_id",
+      "odometer",
+      "distance_since_previous_fill",
+      "tracked_distance",
+      "fill_count",
+      "cost_30d",
+      "fuel_cost_this_month",
+      "last_expense_date",
+      "last_expense_cost",
+      "expense_count",
+      "expense_cost_this_month",
+      "total_expense_cost",
+      "total_vehicle_cost",
+      "service_cost_total",
+      "wash_cost_total",
+      "registration_cost_total",
+      "parking_cost_total",
+      "toll_cost_total",
+      "insurance_cost_total",
+      "last_service_date",
+      "last_service_cost",
+      "top_expense_category",
+      "fill_count_30d",
+      "total_cost",
+      "most_expensive_fill",
+      "least_expensive_fill",
+      "total_volume",
+      "average_price",
+      "average_price_5_fills",
+      "average_consumption",
+      "best_consumption",
+      "worst_consumption",
+      "average_consumption_30d",
+      "average_cost_per_km",
+      "average_fill_volume",
+      "average_days_between_fills",
+      "average_distance_between_fills",
+      "distance_this_month",
+      "last_month_cost",
+      "last_month_average_consumption",
+      "last_month_fill_count",
+      "last_month_average_price",
+      "month_over_month_cost_delta",
+      "fuel_price_trend",
+      "days_since_full_tank",
+      "km_since_full_tank",
+      "lowest_price_per_unit",
+      "highest_price_per_unit",
+      "different_stations_count",
+      "different_cities_count",
+      "last_trip_date",
+      "last_trip_distance",
+      "last_trip_cost",
+      "trip_count",
+      "total_trip_distance",
+      "average_trip_cost_per_km",
+      "source_file_name",
+      "source_reference",
+    ];
   }
 
   _slugToLabel(slug) {
@@ -936,7 +1083,7 @@ class FuelinoCard extends HTMLElement {
       return configured.slug;
     }
 
-    return this._vehicleRecords()[0]?.slug || String(this._config?.vehicle || "").trim();
+    return this._vehicleRecords()[0]?.slug || "";
   }
 
   _availableVehicles() {
@@ -990,14 +1137,7 @@ class FuelinoCard extends HTMLElement {
       return false;
     }
 
-    const candidates = [
-      "total_vehicle_cost",
-      "total_cost",
-      "last_fill_date",
-      "fuel_cost_this_month",
-      "odometer",
-    ];
-    return candidates.some((suffix) => Boolean(this._entity(suffix)));
+    return this._vehicleSensorSuffixes().some((suffix) => Boolean(this._entity(suffix)));
   }
 
   _ensureResizeObserver() {
@@ -1029,7 +1169,29 @@ class FuelinoCard extends HTMLElement {
   }
 
   _entity(suffix) {
-    return this._hass?.states[this._entityId(suffix)] ?? null;
+    const vehicle = this._resolvedVehicleSlug();
+    if (!vehicle) {
+      return null;
+    }
+
+    const direct = this._hass?.states[this._entityId(suffix)];
+    if (direct) {
+      return direct;
+    }
+
+    const regex = this._vehicleEntityRegex();
+    for (const state of Object.values(this._hass?.states || {})) {
+      const entityId = String(state?.entity_id || "");
+      const attrVehicleKey = String(state?.attributes?.vehicle_key || "").trim();
+      const match = entityId.match(regex);
+      const stateVehicle = attrVehicleKey || match?.[1] || "";
+      const stateSuffix = match?.[2] || (entityId.endsWith(`_${suffix}`) ? suffix : "");
+      if (stateVehicle === vehicle && stateSuffix === suffix) {
+        return state;
+      }
+    }
+
+    return null;
   }
 
   _attrs(suffix) {

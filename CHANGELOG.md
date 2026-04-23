@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.3.40
+
+Hotfix release for `FuelinoHA Card`.
+
+### Highlights
+
+- ignores stale or invalid saved `vehicle` values such as `poco_car` instead of trying to render them
+- broadens vehicle detection to the full FuelinoHA sensor set, not only a small group of summary sensors
+- resolves sensor entities by `vehicle_key` attributes when available, so renamed or non-standard entity IDs still work
+
 ## v0.3.39
 
 Follow-up release for `FuelinoHA Card`.
