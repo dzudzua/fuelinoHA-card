@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.3.53
+
+Hotfix release for `FuelinoHA Card`.
+
+### Highlights
+
+- fixes the monthly cost cards after the visual unification pass
+- keeps each month as a unified panel while stacking its metrics vertically for readable values
+- prevents currency values in the `Naklady` section from breaking into narrow letter columns
+
 ## v0.3.52
 
 Design release for `FuelinoHA Card`.

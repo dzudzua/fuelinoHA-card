@@ -1,12 +1,12 @@
-# FuelinoHA Card v0.3.52
+# FuelinoHA Card v0.3.53
 
-Design release focused on stronger visual consistency across layouts.
+Hotfix release focused on the monthly cost cards.
 
-## Changed
+## Fixed
 
-- The separate Costs hero illustration has been removed so the Costs layout follows the same structure as the other layouts.
-- Fuelio, Costs, and Compact now use the same background treatment.
-- Compact metrics, Fuelio metrics, trip cells, cost blocks, and Costs summary cards now share one panel surface style.
+- Monthly cost cards in the `Naklady` section now keep their values readable after the visual unification pass.
+- Each month remains a unified panel, but its metrics stack vertically instead of squeezing into narrow columns.
+- Currency values no longer break into letter-by-letter columns.
 
 ## Upgrade Notes
 
