@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.3.42
+
+Hotfix release for `FuelinoHA Card`.
+
+### Highlights
+
+- resolves FuelinoHA entities by explicit `sensor_key` attributes when available
+- fixes vehicle data loading when Home Assistant uses localized or customized entity IDs
+- keeps the `vehicle_prefix` helper as the primary vehicle picker source
+
 ## v0.3.41
 
 Follow-up release for `FuelinoHA Card`.

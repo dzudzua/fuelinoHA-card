@@ -1246,10 +1246,12 @@ class FuelinoCard extends HTMLElement {
     const regex = this._vehicleEntityRegex();
     for (const state of Object.values(this._hass?.states || {})) {
       const entityId = String(state?.entity_id || "");
-      const attrVehicleKey = String(state?.attributes?.vehicle_key || "").trim();
+      const attrs = state?.attributes || {};
+      const attrVehicleKey = String(attrs.vehicle_key || attrs.sensor_prefix || "").trim();
+      const attrSensorKey = String(attrs.sensor_key || "").trim();
       const match = entityId.match(regex);
       const stateVehicle = attrVehicleKey || match?.[1] || "";
-      const stateSuffix = match?.[2] || (entityId.endsWith(`_${suffix}`) ? suffix : "");
+      const stateSuffix = attrSensorKey || match?.[2] || (entityId.endsWith(`_${suffix}`) ? suffix : "");
       if (stateVehicle === vehicle && stateSuffix === suffix) {
         return state;
       }
