@@ -1,13 +1,12 @@
-# FuelinoHA Card v0.3.44
+# FuelinoHA Card v0.3.45
 
-Hotfix release focused on the visual editor and multi-car setups.
+Hotfix release focused on simplifying the visual editor.
 
 ## What's Fixed
 
-- The vehicle dropdown in the visual editor now saves the selected car to the Lovelace card configuration instead of updating only the live preview.
-- The standalone `fuelino-card-editor.js` is now in sync with the embedded editor logic from `fuelino-card.js`.
-- Multi-car detection in the editor now uses the same FuelinoHA helper and sensor metadata paths as the card itself, including `vehicle_prefix`, `vehicle_key`, `sensor_key`, and localized entity-id aliases.
-- The live preview in the editor is constrained to a scrollable frame, so tall previews no longer overlap the editor dialog.
+- The duplicate live preview panel has been removed from the visual editor.
+- Home Assistant already shows the real dashboard card behind the editor dialog, so the editor now avoids rendering a second copy of the same card.
+- Card settings still save through the normal Lovelace editor flow.
 
 ## Upgrade Notes
 

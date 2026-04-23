@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.3.45
+
+Hotfix release for `FuelinoHA Card`.
+
+### Highlights
+
+- removes the visual editor live preview panel to avoid duplicate card views while editing in Home Assistant
+- keeps editor changes saved through Home Assistant's standard Lovelace config flow
+- leaves the real dashboard card as the single visible preview during card editing
+
 ## v0.3.44
 
 Hotfix release for `FuelinoHA Card`.

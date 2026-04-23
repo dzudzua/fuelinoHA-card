@@ -39,10 +39,7 @@ class FuelinoCardEditor extends HTMLElement {
       return;
     }
 
-    const preview = this.shadowRoot.querySelector("fuelino-card");
-    if (preview) {
-      preview.hass = hass;
-    }
+    return;
   }
 
   _dispatchConfig() {
@@ -67,7 +64,6 @@ class FuelinoCardEditor extends HTMLElement {
     if (dispatch) {
       this._dispatchConfig();
     }
-    this._syncPreview();
     if (render) {
       this._render();
     }
@@ -665,14 +661,6 @@ class FuelinoCardEditor extends HTMLElement {
     });
   }
 
-  _syncPreview() {
-    const preview = this.shadowRoot?.querySelector("fuelino-card");
-    if (preview) {
-      preview.setConfig(this._config);
-      preview.hass = this._hass;
-    }
-  }
-
   _render() {
     if (!this._config) {
       return;
@@ -691,24 +679,16 @@ class FuelinoCardEditor extends HTMLElement {
 
         .editor {
           display: grid;
-          grid-template-columns: minmax(320px, 420px) minmax(280px, 1fr);
+          grid-template-columns: minmax(320px, 420px);
           gap: 20px;
           align-items: start;
         }
 
-        .panel,
-        .preview {
+        .panel {
           border-radius: 24px;
           background: rgba(18, 24, 38, 0.9);
           border: 1px solid rgba(255, 255, 255, 0.08);
           padding: 20px;
-        }
-
-        .preview {
-          min-width: 0;
-          overflow: hidden;
-          position: relative;
-          isolation: isolate;
         }
 
         .panel__header {
@@ -801,28 +781,6 @@ class FuelinoCardEditor extends HTMLElement {
           height: 20px;
         }
 
-        .preview__title {
-          font-size: 0.92rem;
-          color: var(--secondary-text-color);
-          margin-bottom: 12px;
-        }
-
-        .preview__frame {
-          min-width: 0;
-          max-width: 100%;
-          max-height: min(760px, calc(100vh - 280px));
-          overflow: auto;
-          border-radius: 24px;
-          overscroll-behavior: contain;
-        }
-
-        fuelino-card {
-          display: block;
-          width: 100%;
-          max-width: 100%;
-          min-width: 0;
-        }
-
         @media (max-width: 920px) {
           .editor {
             grid-template-columns: 1fr;
@@ -842,16 +800,9 @@ class FuelinoCardEditor extends HTMLElement {
           </div>
           ${this._renderTabContent()}
         </section>
-        <section class="preview">
-          <div class="preview__title">Live preview</div>
-          <div class="preview__frame">
-            <fuelino-card></fuelino-card>
-          </div>
-        </section>
       </div>
     `;
 
-    this._syncPreview();
     this._attachEvents();
   }
 }
