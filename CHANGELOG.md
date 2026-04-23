@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.3.46
+
+Feature release for `FuelinoHA Card`.
+
+### Highlights
+
+- adds visual editor checkboxes for showing or hiding the Fuelio sections: Palivo, Naklady, Zaznam jizd, and Posledni polozky
+- adds matching card config options: `show_fuel`, `show_costs`, `show_trips`, and `show_recent_items`
+- keeps all sections visible by default for existing cards
+- documents the new visibility options in the README
+
 ## v0.3.45
 
 Hotfix release for `FuelinoHA Card`.

@@ -79,8 +79,11 @@ Supported options:
 - `layout`: `costs`, `fuelio`, or `compact`
 - `trend_period`: `30d`, `90d`, `180d`, `365d`, or `all`
 - `accent_color`: optional CSS color for the main accent
+- `show_fuel`: show or hide the fuel section
+- `show_costs`: show or hide the cost summary section
 - `show_expenses`: `true` / `false`
-- `show_trips`: `true` / `false`
+- `show_trips`: show or hide the trip log section
+- `show_recent_items`: show or hide the latest activity section
 - `show_empty_categories`: show expense category cards even when total is `0`
 - `show_header`: show or hide the app-like header in the `costs` layout
 - `dense_mode`: tighter spacing for smaller dashboards

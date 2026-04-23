@@ -20,7 +20,10 @@ class FuelinoCardEditor extends HTMLElement {
       card_background: "",
       border_radius: 28,
       show_expenses: true,
+      show_fuel: true,
+      show_costs: true,
       show_trips: true,
+      show_recent_items: true,
       show_empty_categories: false,
       show_header: true,
       dense_mode: false,
@@ -575,8 +578,11 @@ class FuelinoCardEditor extends HTMLElement {
     if (this._activeTab === "visibility") {
       return `
         <div class="stack">
+          ${this._toggle("Palivo", "show_fuel", "Show the fuel statistics section.")}
+          ${this._toggle("Naklady", "show_costs", "Show the cost and monthly summary section.")}
+          ${this._toggle("Zaznam jizd", "show_trips", "Show TripLog highlights and recent trips.")}
+          ${this._toggle("Posledni polozky", "show_recent_items", "Show the latest fuel, expense and trip activity list.")}
           ${this._toggle("Show expenses", "show_expenses", "Display service and non-fuel expense sections.")}
-          ${this._toggle("Show trips", "show_trips", "Display TripLog highlights and recent trips.")}
           ${this._toggle("Show empty categories", "show_empty_categories", "Keep category cards visible even when their value is zero.")}
           ${this._toggle("Show top header", "show_header", "Show the app-like title bar in the costs layout.")}
           ${this._toggle("Dense mode", "dense_mode", "Use tighter spacing for dashboards with less room.")}
@@ -832,7 +838,10 @@ class FuelinoCard extends HTMLElement {
       layout: "fuelio",
       trend_period: "180d",
       show_expenses: true,
+      show_fuel: true,
+      show_costs: true,
       show_trips: true,
+      show_recent_items: true,
       show_empty_categories: false,
       show_header: true,
     };
@@ -852,7 +861,10 @@ class FuelinoCard extends HTMLElement {
       card_background: "",
       border_radius: 28,
       show_expenses: true,
+      show_fuel: true,
+      show_costs: true,
       show_trips: true,
+      show_recent_items: true,
       show_empty_categories: false,
       show_header: true,
       dense_mode: false,
@@ -2356,6 +2368,8 @@ class FuelinoCard extends HTMLElement {
   }
 
   _renderCosts() {
+    const showFuel = this._config.show_fuel !== false;
+    const showCosts = this._config.show_costs !== false;
     const totalVehicle = this._formatState("total_vehicle_cost");
     const totalExpenses = this._formatState("total_expense_cost");
     const totalFuel = this._formatState("total_cost");
@@ -2394,33 +2408,36 @@ class FuelinoCard extends HTMLElement {
 
           ${this._topPanel()}
 
+          ${showFuel || showCosts ? `
           <section class="section-chipline">
             <div class="fuelio-chip"><ha-icon icon="mdi:chart-box-outline"></ha-icon><span>Souhrn</span></div>
           </section>
 
           <section class="summary-grid">
-            ${this._summaryBlock("Náklady (s palivem)", totalVehicle, [
+            ${showCosts ? this._summaryBlock("Náklady (s palivem)", totalVehicle, [
               { label: "Palivo tento měsíc", value: this._formatState("fuel_cost_this_month"), icon: "mdi:gas-station-outline" },
               { label: "Výdaje tento měsíc", value: this._formatState("expense_cost_this_month"), icon: "mdi:wallet-outline" },
               { label: "Poslední výdaj", value: lastExpenseDate, icon: "mdi:calendar-star" },
               { label: "Poslední tankování", value: lastFillDate, icon: "mdi:calendar-check" },
-            ])}
+            ]) : ""}
 
-            ${this._summaryBlock("Náklady (bez paliva)", totalExpenses, [
+            ${showCosts && this._config.show_expenses ? this._summaryBlock("Náklady (bez paliva)", totalExpenses, [
               { label: "Tento měsíc", value: this._formatState("expense_cost_this_month"), icon: "mdi:calendar-month" },
               { label: "Poslední servis", value: lastServiceDate, icon: "mdi:wrench-clock" },
               { label: "Top kategorie", value: topCategory, icon: "mdi:shape-outline" },
               { label: "Počet výdajů", value: this._formatState("expense_count"), icon: "mdi:counter" },
-            ])}
+            ]) : ""}
 
-            ${this._summaryBlock("Palivo", totalFuel, [
+            ${showFuel ? this._summaryBlock("Palivo", totalFuel, [
               { label: "Tento měsíc", value: this._formatState("fuel_cost_this_month"), icon: "mdi:calendar-month" },
               { label: "Cena za litr", value: this._formatState("last_price_per_unit"), icon: "mdi:cash-100" },
               { label: "Průměr", value: this._formatState("average_price"), icon: "mdi:finance" },
               { label: "Tankování", value: this._formatState("fill_count"), icon: "mdi:counter" },
-            ], "fuel")}
+            ], "fuel") : ""}
           </section>
+          ` : ""}
 
+          ${showCosts && this._config.show_expenses ? `
           <section class="section-chipline">
             <div class="fuelio-chip"><ha-icon icon="mdi:shape-outline"></ha-icon><span>Kategorie</span></div>
           </section>
@@ -2428,6 +2445,7 @@ class FuelinoCard extends HTMLElement {
           <section class="cost-grid">
             ${this._categoryCards()}
           </section>
+          ` : ""}
         </div>
       </ha-card>
     `;
@@ -2585,6 +2603,10 @@ class FuelinoCard extends HTMLElement {
   }
 
   _renderFuelioStats() {
+    const showFuel = this._config.show_fuel !== false;
+    const showCosts = this._config.show_costs !== false;
+    const showTrips = this._config.show_trips !== false;
+    const showRecentItems = this._config.show_recent_items !== false;
     const recentMonths = this._recentMonthSummaries(4);
     const recentFill = this._recentFills()[0] || null;
     const activities = this._recentActivityItems();
@@ -2633,6 +2655,9 @@ class FuelinoCard extends HTMLElement {
             ${this._vehicleSwitcher()}
           </header>
 
+          ${
+            showFuel
+              ? `
           <section class="fuelio-section">
             <div class="fuelio-chip"><ha-icon icon="mdi:gas-station"></ha-icon><span>Palivo</span></div>
             <div class="fuelio-panel fuelio-panel--stats">
@@ -2732,7 +2757,13 @@ class FuelinoCard extends HTMLElement {
               }
             </div>
           </section>
+          `
+              : ""
+          }
 
+          ${
+            showCosts
+              ? `
           <section class="fuelio-section">
             <div class="fuelio-chip"><ha-icon icon="mdi:currency-usd"></ha-icon><span>Naklady</span></div>
             <div class="fuelio-panel fuelio-panel--stats">
@@ -2778,11 +2809,14 @@ class FuelinoCard extends HTMLElement {
               </div>
             </div>
           </section>
+          `
+              : ""
+          }
 
           ${this._fuelioTrendCard()}
 
           ${
-            this._config.show_trips
+            showTrips
               ? `
           <section class="fuelio-section">
             <div class="fuelio-chip"><ha-icon icon="mdi:map-marker-path"></ha-icon><span>Zaznam jizd</span></div>
@@ -2811,6 +2845,9 @@ class FuelinoCard extends HTMLElement {
               : ""
           }
 
+          ${
+            showRecentItems
+              ? `
           <section class="fuelio-section">
             <div class="fuelio-chip"><ha-icon icon="mdi:history"></ha-icon><span>Posledni polozky</span></div>
             <div class="fuelio-panel fuelio-panel--list">
@@ -2838,6 +2875,9 @@ class FuelinoCard extends HTMLElement {
               }
             </div>
           </section>
+          `
+              : ""
+          }
         </div>
       </ha-card>
     `;

@@ -20,7 +20,10 @@ class FuelinoCardEditor extends HTMLElement {
       card_background: "",
       border_radius: 28,
       show_expenses: true,
+      show_fuel: true,
+      show_costs: true,
       show_trips: true,
+      show_recent_items: true,
       show_empty_categories: false,
       show_header: true,
       dense_mode: false,
@@ -575,8 +578,11 @@ class FuelinoCardEditor extends HTMLElement {
     if (this._activeTab === "visibility") {
       return `
         <div class="stack">
+          ${this._toggle("Palivo", "show_fuel", "Show the fuel statistics section.")}
+          ${this._toggle("Naklady", "show_costs", "Show the cost and monthly summary section.")}
+          ${this._toggle("Zaznam jizd", "show_trips", "Show TripLog highlights and recent trips.")}
+          ${this._toggle("Posledni polozky", "show_recent_items", "Show the latest fuel, expense and trip activity list.")}
           ${this._toggle("Show expenses", "show_expenses", "Display service and non-fuel expense sections.")}
-          ${this._toggle("Show trips", "show_trips", "Display TripLog highlights and recent trips.")}
           ${this._toggle("Show empty categories", "show_empty_categories", "Keep category cards visible even when their value is zero.")}
           ${this._toggle("Show top header", "show_header", "Show the app-like title bar in the costs layout.")}
           ${this._toggle("Dense mode", "dense_mode", "Use tighter spacing for dashboards with less room.")}
