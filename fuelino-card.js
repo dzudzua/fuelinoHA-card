@@ -2596,12 +2596,27 @@ class FuelinoCard extends HTMLElement {
             ${this._vehicleSwitcher()}
           </header>
           <section class="compact-panel">
-            <div class="compact-panel__price">${this._formatState("last_price_per_unit")}</div>
-            <div class="compact-panel__chips">
-              <span>${this._formatState("last_fill_date")}</span>
-              <span>${this._formatState("fuel_cost_this_month")}</span>
-              <span>${this._formatState("odometer")}</span>
-              <span>${this._formatState("last_service_date")}</span>
+            <div class="compact-panel__headline">
+              <span>Posledni cena paliva</span>
+              <strong>${this._formatState("last_price_per_unit")}</strong>
+            </div>
+            <div class="compact-panel__metrics">
+              <div class="compact-metric">
+                <span>Posledni tankovani</span>
+                <strong>${this._formatState("last_fill_date")}</strong>
+              </div>
+              <div class="compact-metric">
+                <span>Naklady tento mesic</span>
+                <strong>${this._formatState("fuel_cost_this_month")}</strong>
+              </div>
+              <div class="compact-metric">
+                <span>Tachometr</span>
+                <strong>${this._formatState("odometer")}</strong>
+              </div>
+              <div class="compact-metric">
+                <span>Posledni servis</span>
+                <strong>${this._formatState("last_service_date")}</strong>
+              </div>
             </div>
           </section>
         </div>
@@ -3540,24 +3555,44 @@ class FuelinoCard extends HTMLElement {
           gap: 14px;
         }
 
-        .compact-panel__price {
+        .compact-panel__headline {
+          display: grid;
+          gap: 4px;
+        }
+
+        .compact-panel__headline span,
+        .compact-metric span {
+          color: var(--card-muted);
+          font-size: 0.82rem;
+          line-height: 1.25;
+        }
+
+        .compact-panel__headline strong {
           font-size: 1.5rem;
           font-weight: 800;
           color: color-mix(in srgb, var(--accent) 75%, white);
         }
 
-        .compact-panel__chips {
-          display: flex;
-          flex-wrap: wrap;
+        .compact-panel__metrics {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
           gap: 8px;
         }
 
-        .compact-panel__chips span {
-          border-radius: 999px;
-          padding: 8px 12px;
+        .compact-metric {
+          display: grid;
+          gap: 4px;
+          border-radius: 16px;
+          padding: 10px 12px;
           background: var(--card-olive-panel-strong);
           border: 1px solid rgba(255, 255, 255, 0.08);
-          font-size: 0.84rem;
+          min-width: 0;
+        }
+
+        .compact-metric strong {
+          font-size: 0.94rem;
+          line-height: 1.2;
+          overflow-wrap: anywhere;
         }
 
         .fuelio-shell {

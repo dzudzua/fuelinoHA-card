@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.3.50
+
+Hotfix release for `FuelinoHA Card`.
+
+### Highlights
+
+- adds clear labels to compact layout values
+- replaces unlabeled compact chips with small labeled metric blocks
+- keeps the compact layout dense while making each number understandable at a glance
+
 ## v0.3.49
 
 Hotfix release for `FuelinoHA Card`.

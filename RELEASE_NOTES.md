@@ -1,12 +1,12 @@
-# FuelinoHA Card v0.3.49
+# FuelinoHA Card v0.3.50
 
-Hotfix release focused on simplifying the visual editor.
+Hotfix release focused on compact layout readability.
 
 ## Fixed
 
-- The `Card title` field has been removed from the visual editor because the card already uses the selected vehicle name.
-- Existing YAML configs that still define `title` continue to work as a legacy fallback.
-- The README example and option list now match the simplified editor.
+- Compact layout values now include labels, so the numbers are easier to understand.
+- The old unlabeled chips have been replaced with small metric blocks.
+- The compact layout stays dense while making each value clear at a glance.
 
 ## Upgrade Notes
 
