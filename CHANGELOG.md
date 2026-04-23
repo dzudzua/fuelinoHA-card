@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.3.36
+
+Follow-up release for `FuelinoHA Card`.
+
+### Highlights
+
+- fixed the vehicle picker to prefer real Fuelino vehicle devices from Home Assistant registry
+- prevents unrelated devices such as phones from appearing as selectable vehicles
+- keeps state-based detection only as a fallback when registry vehicle devices are unavailable
+
 ## v0.3.35
 
 Follow-up release for `FuelinoHA Card`.

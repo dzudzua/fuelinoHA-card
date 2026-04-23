@@ -311,6 +311,7 @@ class FuelinoCardEditor extends HTMLElement {
         }
 
         const deviceMap = new Map(deviceRegistry.map((device) => [device.id, device]));
+        const registryVehicles = new Map();
 
         for (const entity of entityRegistry) {
           const match = String(entity?.entity_id || "").match(regex);
@@ -320,6 +321,9 @@ class FuelinoCardEditor extends HTMLElement {
 
           const slug = match[1];
           const device = deviceMap.get(entity.device_id);
+          const isFuelinoVehicleDevice =
+            String(device?.manufacturer || "").trim().toLowerCase() === "fuelio" &&
+            String(device?.name || "").trim().toLowerCase() !== "fuelio";
           const stateLabel = stateVehicles.get(slug)?.label || "";
           const label =
             stateLabel ||
@@ -327,10 +331,14 @@ class FuelinoCardEditor extends HTMLElement {
             (device?.name ? this._cleanVehicleLabel(device.name, slug) : "") ||
             this._slugToLabel(slug);
 
-          stateVehicles.set(slug, { value: slug, label });
+          if (isFuelinoVehicleDevice) {
+            registryVehicles.set(slug, { value: slug, label });
+          } else if (!registryVehicles.size) {
+            stateVehicles.set(slug, { value: slug, label });
+          }
         }
 
-        catalog = [...stateVehicles.values()];
+        catalog = registryVehicles.size ? [...registryVehicles.values()] : [...stateVehicles.values()];
       }
     } catch (_error) {
       // Fall back to labels derived from entity states when registry access is unavailable.
