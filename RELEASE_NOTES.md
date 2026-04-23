@@ -1,12 +1,12 @@
-# FuelinoHA Card v0.3.50
+# FuelinoHA Card v0.3.51
 
-Hotfix release focused on compact layout readability.
+Design release focused on visual consistency across layouts.
 
-## Fixed
+## Changed
 
-- Compact layout values now include labels, so the numbers are easier to understand.
-- The old unlabeled chips have been replaced with small metric blocks.
-- The compact layout stays dense while making each value clear at a glance.
+- The compact layout's labeled metric-block style now extends to the Fuelio and Costs layouts.
+- Fuel, cost, trip, summary, and category stats now use a more consistent label-first pattern.
+- Metric grids now collapse more cleanly on narrow cards.
 
 ## Upgrade Notes
 

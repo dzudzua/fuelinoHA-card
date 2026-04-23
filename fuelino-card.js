@@ -3384,21 +3384,29 @@ class FuelinoCard extends HTMLElement {
         .cost-card__stats {
           display: grid;
           grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: 16px 18px;
+          gap: 8px;
         }
 
         .summary-stat,
         .mini-stat {
           display: grid;
-          grid-template-columns: 26px 1fr;
-          gap: 6px 10px;
-          align-items: center;
+          grid-template-columns: minmax(0, 1fr) auto;
+          grid-template-areas:
+            "label icon"
+            "value icon";
+          gap: 4px 10px;
+          align-items: start;
+          border-radius: 16px;
+          padding: 10px 12px;
+          background: var(--card-olive-panel-strong);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          min-width: 0;
         }
 
         .summary-stat__icon,
         .mini-stat__icon {
           color: var(--card-green);
-          grid-row: span 2;
+          grid-area: icon;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -3406,13 +3414,18 @@ class FuelinoCard extends HTMLElement {
 
         .summary-stat__value,
         .mini-stat__value {
+          grid-area: value;
           font-size: 1rem;
           font-weight: 700;
+          line-height: 1.2;
+          overflow-wrap: anywhere;
         }
 
         .summary-stat__label,
         .mini-stat__label {
-          font-size: 0.88rem;
+          grid-area: label;
+          font-size: 0.82rem;
+          line-height: 1.25;
           color: var(--card-muted);
         }
 
@@ -3783,16 +3796,17 @@ class FuelinoCard extends HTMLElement {
         .fuelio-fuelgrid {
           display: grid;
           grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: 14px;
-          margin-bottom: 18px;
+          gap: 8px;
+          margin-bottom: 8px;
         }
 
         .fuelio-fuelcard {
           display: grid;
-          gap: 6px;
-          padding: 16px;
-          border-radius: 20px;
+          gap: 4px;
+          padding: 10px 12px;
+          border-radius: 16px;
           background: var(--fuelio-panel-strong);
+          border: 1px solid rgba(255, 255, 255, 0.08);
           min-width: 0;
         }
 
@@ -3809,19 +3823,26 @@ class FuelinoCard extends HTMLElement {
         }
 
         .fuelio-fuelcard strong {
-          font-size: 1.2rem;
+          font-size: 1rem;
           font-weight: 800;
-          line-height: 1.1;
+          line-height: 1.2;
+          overflow-wrap: anywhere;
         }
 
         .fuelio-statrows--dense .fuelio-statrow {
-          gap: 12px;
+          gap: 4px;
         }
 
-        .fuelio-statrows,
+        .fuelio-statrows {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 8px;
+        }
+
         .fuelio-costblock {
           display: grid;
-          gap: 14px;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 8px;
         }
 
         .fuelio-costgrid {
@@ -3844,6 +3865,7 @@ class FuelinoCard extends HTMLElement {
         }
 
         .fuelio-costblock__title {
+          grid-column: 1 / -1;
           color: var(--fuelio-muted);
           text-transform: uppercase;
           letter-spacing: 0.06em;
@@ -3852,9 +3874,14 @@ class FuelinoCard extends HTMLElement {
 
         .fuelio-statrow {
           display: grid;
-          grid-template-columns: minmax(0, 1fr) auto;
-          gap: 18px;
-          align-items: center;
+          grid-template-columns: 1fr;
+          gap: 4px;
+          align-items: start;
+          border-radius: 16px;
+          padding: 10px 12px;
+          background: var(--fuelio-panel-strong);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          min-width: 0;
         }
 
         .fuelio-statrow__left {
@@ -3864,19 +3891,26 @@ class FuelinoCard extends HTMLElement {
           min-width: 0;
         }
 
+        .fuelio-statrow__label {
+          order: -1;
+        }
+
         .fuelio-statrow__left strong,
         .fuelio-tripcell strong,
         .fuelio-trend__value {
           font-size: 1.05rem;
           font-weight: 800;
           letter-spacing: 0.01em;
+          overflow-wrap: anywhere;
         }
 
         .fuelio-statrow__label,
         .fuelio-tripcell span,
         .fuelio-trend__label {
           color: var(--fuelio-muted);
-          text-align: right;
+          text-align: left;
+          font-size: 0.82rem;
+          line-height: 1.25;
         }
 
         .fuelio-trend {
@@ -4082,15 +4116,16 @@ class FuelinoCard extends HTMLElement {
         .fuelio-tripgrid {
           display: grid;
           grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: 16px;
+          gap: 8px;
         }
 
         .fuelio-tripcell {
           display: grid;
-          gap: 6px;
-          padding: 16px;
-          border-radius: 18px;
+          gap: 4px;
+          padding: 10px 12px;
+          border-radius: 16px;
           background: var(--fuelio-panel-strong);
+          border: 1px solid rgba(255, 255, 255, 0.08);
           min-width: 0;
         }
 
@@ -4309,7 +4344,9 @@ class FuelinoCard extends HTMLElement {
         :host([data-width-mode="xs"]) .summary-card__stats,
         :host([data-width-mode="xs"]) .cost-card__stats,
         :host([data-width-mode="xs"]) .garage-hero__stats,
-        :host([data-width-mode="xs"]) .garage-metrics {
+        :host([data-width-mode="xs"]) .garage-metrics,
+        :host([data-width-mode="xs"]) .fuelio-statrows,
+        :host([data-width-mode="xs"]) .fuelio-costblock {
           grid-template-columns: 1fr;
         }
 
@@ -4354,6 +4391,8 @@ class FuelinoCard extends HTMLElement {
 
         :host([data-width-mode="sm"]) .fuelio-tripgrid,
         :host([data-width-mode="sm"]) .fuelio-fuelgrid,
+        :host([data-width-mode="sm"]) .fuelio-statrows,
+        :host([data-width-mode="sm"]) .fuelio-costblock,
         :host([data-width-mode="xs"]) .fuelio-tripgrid {
           grid-template-columns: 1fr;
         }

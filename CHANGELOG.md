@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.3.51
+
+Design release for `FuelinoHA Card`.
+
+### Highlights
+
+- extends the compact layout's labeled metric-block style to the Fuelio and Costs layouts
+- makes stats use a consistent label-first visual pattern across layouts
+- aligns fuel, cost, trip, summary, and category metrics around the same small panel treatment
+- improves narrow-card behavior for the unified metric grids
+
 ## v0.3.50
 
 Hotfix release for `FuelinoHA Card`.
