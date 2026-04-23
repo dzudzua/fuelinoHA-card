@@ -194,6 +194,11 @@ class FuelinoCardEditor extends HTMLElement {
   }
 
   _fallbackVehicleLabelFromState(state, slug) {
+    const explicitVehicleName = this._cleanVehicleLabel(state?.attributes?.vehicle_name || "", slug);
+    if (explicitVehicleName && explicitVehicleName !== this._slugToLabel(slug)) {
+      return explicitVehicleName;
+    }
+
     const vehicleDetails = this._composeVehicleDetailsLabel(state?.attributes);
     if (vehicleDetails) {
       return vehicleDetails;
@@ -757,6 +762,11 @@ class FuelinoCard extends HTMLElement {
   }
 
   _fallbackVehicleLabelFromState(state, slug) {
+    const explicitVehicleName = this._cleanVehicleLabel(state?.attributes?.vehicle_name || "", slug);
+    if (explicitVehicleName && explicitVehicleName !== this._slugToLabel(slug)) {
+      return explicitVehicleName;
+    }
+
     const vehicleDetails = this._composeVehicleDetailsLabel(state?.attributes);
     if (vehicleDetails) {
       return vehicleDetails;

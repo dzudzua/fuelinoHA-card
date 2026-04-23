@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.3.33
+
+Follow-up release for `FuelinoHA Card`.
+
+### Highlights
+
+- updated vehicle selection to use the new `vehicle_name` diagnostics attribute from FuelinoHA
+- improved both the card switcher and editor picker for multi-car setups
+- reduced reliance on guessed labels from friendly names and device names
+
 ## v0.3.32
 
 Follow-up release for `FuelinoHA Card`.
