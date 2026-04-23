@@ -639,6 +639,10 @@ class FuelinoCardEditor extends HTMLElement {
     this.shadowRoot.querySelectorAll("input[data-key], select[data-key]").forEach((field) => {
       const key = field.dataset.key;
       const handler = () => {
+        if (field.tagName === "SELECT") {
+          this._setValue(key, field.value.trim());
+          return;
+        }
         if (field.type === "checkbox") {
           this._setValue(key, field.checked);
           return;
@@ -806,8 +810,10 @@ class FuelinoCardEditor extends HTMLElement {
         .preview__frame {
           min-width: 0;
           max-width: 100%;
-          overflow: hidden;
+          max-height: min(760px, calc(100vh - 280px));
+          overflow: auto;
           border-radius: 24px;
+          overscroll-behavior: contain;
         }
 
         fuelino-card {

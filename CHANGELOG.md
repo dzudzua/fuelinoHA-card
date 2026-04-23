@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.3.44
+
+Hotfix release for `FuelinoHA Card`.
+
+### Highlights
+
+- fixes the visual editor vehicle dropdown so selected cars are saved to Lovelace config, not only shown in live preview
+- syncs the standalone editor with the embedded editor detection logic for multi-car FuelinoHA setups
+- constrains the editor live preview frame so tall card previews scroll inside the editor instead of overlapping the dialog
+
 ## v0.3.43
 
 Hotfix release for `FuelinoHA Card`.
