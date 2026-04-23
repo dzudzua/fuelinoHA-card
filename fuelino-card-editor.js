@@ -22,6 +22,7 @@ class FuelinoCardEditor extends HTMLElement {
       show_expenses: true,
       show_fuel: true,
       show_costs: true,
+      show_charts: true,
       show_trips: true,
       show_recent_items: true,
       show_empty_categories: false,
@@ -580,6 +581,7 @@ class FuelinoCardEditor extends HTMLElement {
         <div class="stack">
           ${this._toggle("Palivo", "show_fuel", "Show the fuel statistics section.")}
           ${this._toggle("Naklady", "show_costs", "Show the cost and monthly summary section.")}
+          ${this._toggle("Grafy", "show_charts", "Show trend charts and graph carousel.")}
           ${this._toggle("Zaznam jizd", "show_trips", "Show TripLog highlights and recent trips.")}
           ${this._toggle("Posledni polozky", "show_recent_items", "Show the latest fuel, expense and trip activity list.")}
           ${this._toggle("Show expenses", "show_expenses", "Display service and non-fuel expense sections.")}

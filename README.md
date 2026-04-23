@@ -81,6 +81,7 @@ Supported options:
 - `accent_color`: optional CSS color for the main accent
 - `show_fuel`: show or hide the fuel section
 - `show_costs`: show or hide the cost summary section
+- `show_charts`: show or hide the trend chart section
 - `show_expenses`: `true` / `false`
 - `show_trips`: show or hide the trip log section
 - `show_recent_items`: show or hide the latest activity section

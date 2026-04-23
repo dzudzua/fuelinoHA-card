@@ -22,6 +22,7 @@ class FuelinoCardEditor extends HTMLElement {
       show_expenses: true,
       show_fuel: true,
       show_costs: true,
+      show_charts: true,
       show_trips: true,
       show_recent_items: true,
       show_empty_categories: false,
@@ -580,6 +581,7 @@ class FuelinoCardEditor extends HTMLElement {
         <div class="stack">
           ${this._toggle("Palivo", "show_fuel", "Show the fuel statistics section.")}
           ${this._toggle("Naklady", "show_costs", "Show the cost and monthly summary section.")}
+          ${this._toggle("Grafy", "show_charts", "Show trend charts and graph carousel.")}
           ${this._toggle("Zaznam jizd", "show_trips", "Show TripLog highlights and recent trips.")}
           ${this._toggle("Posledni polozky", "show_recent_items", "Show the latest fuel, expense and trip activity list.")}
           ${this._toggle("Show expenses", "show_expenses", "Display service and non-fuel expense sections.")}
@@ -840,6 +842,7 @@ class FuelinoCard extends HTMLElement {
       show_expenses: true,
       show_fuel: true,
       show_costs: true,
+      show_charts: true,
       show_trips: true,
       show_recent_items: true,
       show_empty_categories: false,
@@ -863,6 +866,7 @@ class FuelinoCard extends HTMLElement {
       show_expenses: true,
       show_fuel: true,
       show_costs: true,
+      show_charts: true,
       show_trips: true,
       show_recent_items: true,
       show_empty_categories: false,
@@ -2605,6 +2609,7 @@ class FuelinoCard extends HTMLElement {
   _renderFuelioStats() {
     const showFuel = this._config.show_fuel !== false;
     const showCosts = this._config.show_costs !== false;
+    const showCharts = this._config.show_charts !== false;
     const showTrips = this._config.show_trips !== false;
     const showRecentItems = this._config.show_recent_items !== false;
     const recentMonths = this._recentMonthSummaries(4);
@@ -2813,7 +2818,7 @@ class FuelinoCard extends HTMLElement {
               : ""
           }
 
-          ${this._fuelioTrendCard()}
+          ${showCharts ? this._fuelioTrendCard() : ""}
 
           ${
             showTrips

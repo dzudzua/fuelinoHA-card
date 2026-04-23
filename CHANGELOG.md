@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.3.47
+
+Feature release for `FuelinoHA Card`.
+
+### Highlights
+
+- adds a visual editor checkbox for showing or hiding the Fuelio trend charts
+- adds the matching `show_charts` config option
+- keeps charts visible by default for existing cards
+- documents the new chart visibility option in the README
+
 ## v0.3.46
 
 Feature release for `FuelinoHA Card`.

@@ -1,20 +1,12 @@
-# FuelinoHA Card v0.3.46
+# FuelinoHA Card v0.3.47
 
-Feature release focused on section visibility controls.
+Feature release focused on chart visibility controls.
 
 ## What's New
 
-- The visual editor now includes checkboxes for showing or hiding key Fuelio sections:
-  - Palivo
-  - Naklady
-  - Zaznam jizd
-  - Posledni polozky
-- The card now supports matching config options:
-  - `show_fuel`
-  - `show_costs`
-  - `show_trips`
-  - `show_recent_items`
-- Existing cards keep all sections visible by default.
+- The visual editor now includes a `Grafy` checkbox for showing or hiding the Fuelio trend chart carousel.
+- The card now supports the matching `show_charts` config option.
+- Existing cards keep charts visible by default.
 
 ## Upgrade Notes
 
