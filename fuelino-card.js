@@ -230,6 +230,13 @@ class FuelinoCardEditor extends HTMLElement {
     return this._cleanVehicleLabel(friendly, slug);
   }
 
+  _normalizedVehicleValue(value) {
+    return String(value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, " ");
+  }
+
   _buildStateVehicleMap() {
     const states = Object.values(this._hass?.states || {});
     const vehicles = new Map();

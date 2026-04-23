@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.3.35
+
+Follow-up release for `FuelinoHA Card`.
+
+### Highlights
+
+- fixed the editor crash caused by a missing `_normalizedVehicleValue` helper
+- restores card configuration after the stale vehicle label cleanup from the previous release
+
 ## v0.3.34
 
 Follow-up release for `FuelinoHA Card`.
