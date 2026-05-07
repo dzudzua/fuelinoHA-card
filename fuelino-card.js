@@ -1591,6 +1591,30 @@ class FuelinoCard extends HTMLElement {
     return formatter.format(numeric);
   }
 
+  _fuelPriceSuffixes() {
+    return new Set([
+      "last_price_per_unit",
+      "average_price",
+      "average_price_5_fills",
+      "last_month_average_price",
+      "lowest_price_per_unit",
+      "highest_price_per_unit",
+    ]);
+  }
+
+  _isFuelPriceSuffix(suffix) {
+    return this._fuelPriceSuffixes().has(suffix);
+  }
+
+  _formatFuelPriceValue(value, unit = "", fallback = "—") {
+    const numeric = this._numberFromValue(value);
+    if (numeric === null) {
+      return fallback;
+    }
+    const formatted = numeric.toFixed(2);
+    return unit ? `${formatted} ${unit}` : formatted;
+  }
+
   _formatState(suffix, fallback = "—") {
     const entity = this._entity(suffix);
     if (!entity || entity.state === "unknown" || entity.state === "unavailable") {
@@ -1600,6 +1624,9 @@ class FuelinoCard extends HTMLElement {
     const numeric = this._number(suffix);
     const unit = this._unit(suffix);
     if (numeric !== null) {
+      if (this._isFuelPriceSuffix(suffix)) {
+        return this._formatFuelPriceValue(numeric, unit, fallback);
+      }
       const precision =
         entity.attributes?.suggested_display_precision ??
         (unit && (unit.includes("Kč") || unit.includes("CZK") || unit.includes("/") ? 2 : 1));
@@ -1611,6 +1638,13 @@ class FuelinoCard extends HTMLElement {
     }
 
     return unit ? `${entity.state} ${unit}` : entity.state;
+  }
+
+  _formatTrendValue(card, value) {
+    if (card?.value_format === "fuel_price") {
+      return this._formatFuelPriceValue(value, card.unit, this._formatNumber(value));
+    }
+    return this._formatCurrencyValue(value, card?.unit, this._formatNumber(value));
   }
 
   _formatCurrencyValue(value, unit = null, fallback = "—") {
@@ -1787,13 +1821,18 @@ class FuelinoCard extends HTMLElement {
     return palettes[kind] || palettes.default;
   }
 
-  _formatChartValue(value, unit = "") {
+  _formatChartValue(value, unit = "", options = {}) {
     const numeric = this._numberFromValue(value);
     if (numeric === null) {
       return "—";
     }
 
     const normalizedUnit = String(unit || "").trim();
+    if (options.value_format === "fuel_price") {
+      const shortUnit = normalizedUnit.replace(/\s+/g, "");
+      const formatted = numeric.toFixed(2);
+      return shortUnit ? `${formatted} ${shortUnit}` : formatted;
+    }
     const shortUnitMap = {
       "Kč": "Kč",
       CZK: "Kč",
@@ -1872,6 +1911,7 @@ class FuelinoCard extends HTMLElement {
         delta: this._formatTrendDeltaValue(values[values.length - 1], values[values.length - 2]),
         values,
         unit: this._unit("last_price_per_unit"),
+        value_format: "fuel_price",
         xStart: this._formatDate(priceFills[0]?.date, { day: "2-digit", month: "short" }),
         xEnd: this._formatDate(priceFills[priceFills.length - 1]?.date, { day: "2-digit", month: "short" }),
       });
@@ -2075,11 +2115,11 @@ class FuelinoCard extends HTMLElement {
                 <div class="fuelio-trend__eyebrow"><ha-icon icon="${card.icon}"></ha-icon> ${card.title}</div>
                 ${showPeriodSelector ? periodSelector : ""}
                 <div class="fuelio-trend__metric">
-                  <span class="fuelio-trend__value">${this._formatCurrencyValue(card.latest, card.unit, this._formatNumber(card.latest))}</span>
+                  <span class="fuelio-trend__value">${this._formatTrendValue(card, card.latest)}</span>
                   <span class="fuelio-trend__label">Posledni</span>
                 </div>
                 <div class="fuelio-trend__metric">
-                  <span class="fuelio-trend__value">${this._formatCurrencyValue(card.average, card.unit, this._formatNumber(card.average))}</span>
+                  <span class="fuelio-trend__value">${this._formatTrendValue(card, card.average)}</span>
                   <span class="fuelio-trend__label">Prum.</span>
                 </div>
                 <div class="fuelio-trend__metric">
@@ -2096,7 +2136,7 @@ class FuelinoCard extends HTMLElement {
                     .map(
                       (height, index) => `
                     <div class="fuelio-bars__col">
-                      <div class="fuelio-bars__value">${this._formatChartValue(card.values[index], card.unit)}</div>
+                      <div class="fuelio-bars__value">${this._formatChartValue(card.values[index], card.unit, card)}</div>
                       <div class="fuelio-bars__plot">
                         <div class="fuelio-bars__bar ${index === heights.length - 1 ? "is-active" : ""}" style="height:${height.toFixed(1)}px"></div>
                       </div>
@@ -2132,11 +2172,11 @@ class FuelinoCard extends HTMLElement {
               <div class="fuelio-trend__eyebrow"><ha-icon icon="${card.icon}"></ha-icon> ${card.title}</div>
               ${showPeriodSelector ? periodSelector : ""}
               <div class="fuelio-trend__metric">
-                <span class="fuelio-trend__value">${this._formatCurrencyValue(card.latest, card.unit, this._formatNumber(card.latest))}</span>
+                <span class="fuelio-trend__value">${this._formatTrendValue(card, card.latest)}</span>
                 <span class="fuelio-trend__label">Posledni</span>
               </div>
               <div class="fuelio-trend__metric">
-                <span class="fuelio-trend__value">${this._formatCurrencyValue(card.average, card.unit, this._formatNumber(card.average))}</span>
+                <span class="fuelio-trend__value">${this._formatTrendValue(card, card.average)}</span>
                 <span class="fuelio-trend__label">Prum.</span>
               </div>
               <div class="fuelio-trend__metric">
@@ -2160,7 +2200,7 @@ class FuelinoCard extends HTMLElement {
                     const active = index === all.length - 1 ? "is-active" : "";
                     const labelY = Math.max(16, y - 12);
                     return `
-                      <text x="${x}" y="${labelY}" class="fuelio-trend__point-value ${active}">${this._formatChartValue(value, card.unit)}</text>
+                      <text x="${x}" y="${labelY}" class="fuelio-trend__point-value ${active}">${this._formatChartValue(value, card.unit, card)}</text>
                       <circle cx="${x}" cy="${y}" r="${index === all.length - 1 ? 7 : 4.5}" class="fuelio-trend__dot ${active}"></circle>
                     `;
                   })
